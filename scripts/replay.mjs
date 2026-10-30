@@ -269,4 +269,34 @@ await record("pinefly", async () => {
   await shot("support-bot");
 });
 
+await record("truefare", async () => {
+  await click(".g-explore", "search flights");
+  await waitFor('button[aria-label^="한빛항공"]');
+  await select("한빛항공");
+  await waitFor('.g-primary[data-site="truefare"]:not([disabled])');
+  await pause(1000);
+  await shot("sellers-highest-price");
+  await chooseSeller("truefare");
+  await waitFor(".o-sample");
+  await fill();
+  await shot("passenger-no-preselected");
+  await click(".o-pay", "continue");
+  await waitFor('text="결제 방법을 선택하세요"');
+  await pause();
+  await shot("checkout-same-price");
+  await finishCard();
+  await shot("paid-ticket-issued");
+  await inbox();
+  await pause(1000);
+  await openUnread();
+  await shot("ticket-mail");
+  await click(".m-cta", "check with airline");
+  await click(".l-main button", "lookup at airline");
+  await waitFor('.l-result[data-status="ticketed"]');
+  await shot("lookup-ticketed");
+  await click(panel("+3일"), "skip three days");
+  await pause(1200);
+  await shot("still-ticketed-after-3-days");
+});
+
 await task.finish({ keep: [] });

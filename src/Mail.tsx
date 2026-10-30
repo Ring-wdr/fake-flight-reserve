@@ -25,6 +25,16 @@ function Body({ mail }: { mail: Mail }) {
         <Flag title="이탈 유도 메일">결제 화면을 떠나면 자동으로 발송됩니다. 링크를 누르면 상품은 이미 사라져 있습니다.</Flag>
       </div>
     );
+  if (mail.kind === "ticket")
+    return (
+      <div className="m-letter">
+        <h2>{mail.from}</h2>
+        <p>전자티켓이 <b>발급</b>되었습니다. 공항에서 이 번호나 여권을 제시해 주세요.</p>
+        <p className="m-box">전자티켓 번호 {order.ticketNo}<br />예약번호 {order.pnr}<br />{f?.airline} {f?.code} · {f?.dep} → {f?.arr}<br />결제 금액 {won(order.paidTotal ?? 0)}</p>
+        <a className="m-cta" onClick={focus} href="#/ota/lookup">항공사에서 예약 확인</a>
+        <Flag ok title="즉시 발권">결제 직후 전자티켓 번호를 받고, 항공사 조회에서도 같은 번호를 확인할 수 있습니다.</Flag>
+      </div>
+    );
   if (mail.kind === "receipt")
     return (
       <div className="m-letter">

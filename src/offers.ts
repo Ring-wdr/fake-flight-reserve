@@ -49,8 +49,23 @@ function rngFrom(seed: number) {
 
 const round100 = (n: number) => Math.round(n / 100) * 100;
 
+// 정상 판매처: 조건이 같으면 언제나 같은 가격이고, 좌석을 부풀려 표시하지 않는다.
+function honestOffers(site: SiteId, search: Search) {
+  const ret = search.trip === "round" ? [...FLIGHTS].sort((a, b) => legPrice(a, search, "ret") - legPrice(b, search, "ret"))[0] : undefined;
+  const offers = FLIGHTS.map((flight): Offer => ({
+    id: `${site}-${flight.id}`,
+    flight,
+    ret,
+    price: sellerFare(site, search, flight.id, ret?.id),
+    isAnchor: false,
+    seatsLeft: 0,
+  }));
+  return { offers: offers.sort((a, b) => a.price - b.price), anchorIncluded: false };
+}
+
 // 기준가는 절반 확률로만 목록에 나오고, 나머지는 모두 기준가보다 비싸다.
-export function buildOffers({ search, anchor, seed, soldId }: Listing): { offers: Offer[]; anchorIncluded: boolean } {
+export function buildOffers({ site, search, anchor, seed, soldId }: Listing): { offers: Offer[]; anchorIncluded: boolean } {
+  if (SITES[site].honest) return honestOffers(site, search);
   const rng = rngFrom(seed);
   const shuffled = [...FLIGHTS].sort(() => rng() - 0.5);
   const anchorIncluded = rng() < 0.5;

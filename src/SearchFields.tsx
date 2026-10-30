@@ -21,8 +21,9 @@ function PaxPicker({ search, onChange }: { search: Search; onChange: (s: Search)
       <button className="g-opt" aria-expanded={open} aria-label={`승객 ${travellers(search)}명, 승객 수 변경`} onClick={() => setOpen(!open)}>
         <span className="ms">person</span>{travellers(search)}<span className="ms sm">arrow_drop_down</span>
       </button>
+      {open && <div className="g-pax-back" onClick={() => setOpen(false)} />}
       {open && (
-        <div className="g-pax-pop">
+        <div className="g-pax-pop" role="dialog" aria-label="승객 수 선택">
           <Counter label="성인" sub="12세 이상" value={search.adults} min={1} max={search.adults + room}
             onChange={(n) => onChange({ ...search, adults: n, infants: Math.min(search.infants, n) })} />
           <Counter label="어린이" sub="2~11세" value={search.children} min={0} max={search.children + room}

@@ -22,13 +22,17 @@ pnpm preview   # http://localhost:5199
 | Voyagate | 3단계, 하단 고정 가격 바 | 1인당 가격 표기 → 이탈 유도 메일 → 가짜 확정 메일 → 발권 지연 | `evidence/voyagate.mp4` |
 | Pinefly | 6단계 스테퍼 | 가격 고정 권유, 단계별 끼워팔기 → 판매 종료로 목록 이동 → 결제 후 취소 → 환불 지연, 10분 타이머 | `evidence/pinefly.mp4` |
 
-재현 패널의 시나리오를 바꾸면 어느 판매처에서든 수법 하나만 따로 볼 수 있습니다.
+| Truefare | 2단계, 정상 동작 비교군 | 표시 가격 그대로 결제 → 즉시 발권. 옵션 미선택, 타이머 없음, 재검색해도 같은 가격 | `evidence/truefare.mp4` |
+
+재현 패널의 시나리오를 바꾸면 수법 판매처 세 곳에서 수법 하나만 따로 볼 수 있습니다. Truefare는 어떤 시나리오에서도 정상으로 동작합니다.
+
+Truefare의 표시 가격은 네 곳 중 가장 높습니다. 다른 세 곳에 필수 수수료를 더한 금액보다도 높지만, 미리 선택된 옵션이나 가격 인상이 붙으면 다른 곳의 최종 결제 금액이 더 비싸질 수 있습니다.
 
 ## 판매사 자체 목록
 
 가격 변동이나 판매 종료, 결제 중단, 이탈 유도 메일 뒤에는 메타 검색이 아니라 해당 판매사의 자체 목록(`/ota/list`)으로 이동합니다. 이 목록에서도 검색할 수 있으며, 판매처마다 달라지는 것은 문구와 가격 표기뿐입니다.
 
-- `src/offers.ts`: 목록 생성 로직. 판매처를 추가해도 그대로 씁니다.
+- `src/offers.ts`: 목록 생성 로직. 판매처를 추가해도 그대로 쓰며, `honest` 판매처는 실제 가격을 그대로 보여 줍니다.
 - `src/SearchFields.tsx`: 메타 검색과 판매사 목록이 함께 쓰는 검색 입력.
 - `src/SellerList.tsx`: 공통 목록 상태와 화면.
 
@@ -76,7 +80,7 @@ pnpm preview   # http://localhost:5199
 ```bash
 ego-browser nodejs < scripts/replay.mjs
 cd evidence
-for s in faretrap voyagate pinefly; do
+for s in faretrap voyagate pinefly truefare; do
   ffmpeg -y -f concat -safe 0 -i $s/frames.txt -vf "fps=15,format=yuv420p" -c:v libx264 -crf 22 $s.mp4
 done
 ```

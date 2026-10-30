@@ -13,6 +13,7 @@ const COPY: Record<SiteId, { title: string; empty: string; searchLabel: string }
   faretrap: { title: "이 일정의 특가 항공권", empty: "조건에 맞는 특가가 없습니다.", searchLabel: "특가 검색" },
   voyagate: { title: "예약 가능한 여행 상품", empty: "조건에 맞는 상품이 없습니다.", searchLabel: "항공편 검색" },
   pinefly: { title: "추천 항공권", empty: "조건에 맞는 항공권이 없습니다.", searchLabel: "검색" },
+  truefare: { title: "항공권 목록", empty: "조건에 맞는 항공권이 없습니다.", searchLabel: "검색" },
 };
 
 // 어느 판매사에서나 쓰는 목록 상태: 재검색, 필터, 현재 목록의 가격.
@@ -66,7 +67,8 @@ export function SellerListPage() {
           <div>
             <h2 className="sl-title">{copy.title}</h2>
             <p className="o-muted">{AIRPORTS[s.from]} {s.trip === "round" ? "⇄" : "→"} {AIRPORTS[s.to]} · {dateLabel(s.date)} · {CABINS[s.cabin].label} · {paxLabel(s)}</p>
-            {l.listing && !l.loading && (
+            {SITES[l.site].honest && !l.loading && <Flag ok title="일관된 가격">같은 조건이면 몇 번을 검색해도 같은 가격입니다. 세금과 수수료가 모두 포함된 금액입니다.</Flag>}
+            {l.listing && !l.loading && !SITES[l.site].honest && (
               <Flag title="미끼 후 상위 가격 목록">{`기준가(앞서 본 가격 또는 검색 조건의 최저가) ${won(l.listing.anchor)}은(는) ${l.anchorIncluded ? "이번 목록에 무작위로 포함되었습니다" : "이번 목록에 없습니다"}. 나머지는 전부 그보다 비쌉니다. 같은 조건이어도 검색할 때마다 달라집니다.`}</Flag>
             )}
             <ul className="sl-list" aria-busy={l.loading} data-anchor={l.listing?.anchor} data-anchor-included={String(l.anchorIncluded)}>
@@ -85,7 +87,7 @@ export function SellerListPage() {
                         <b>{o.flight.dep} – {o.flight.arr}{o.flight.plusDay && <sup>+1</sup>}</b>
                         <small>{o.flight.airline} {o.flight.code} · {o.flight.duration} · {o.flight.stops ? `경유 ${o.flight.stops}회` : "직항"}</small>
                         {o.ret && <small>귀국 {o.ret.dep} – {o.ret.arr} · {o.ret.airline}</small>}
-                        <small className="sl-seats">{o.seatsLeft}석 남음</small>
+                        {o.seatsLeft > 0 && <small className="sl-seats">{o.seatsLeft}석 남음</small>}
                       </span>
                       <span className="sl-price" data-price={o.price}>
                         <b>{won(onePerson ? Math.round(o.price / Math.max(1, seats(s))) : o.price)}</b>

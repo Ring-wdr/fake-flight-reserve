@@ -8,19 +8,20 @@ export { sellerFare };
 export type Scenario = "site" | "price" | "lure" | "fake" | "confirm";
 
 export const SCENARIOS: { id: Scenario; label: string; hint: string }[] = [
-  { id: "site", label: "판매처별 기본 조합", hint: "판매처마다 다른 수법 조합으로 진행합니다." },
+  { id: "site", label: "판매처별 기본 조합", hint: "판매처마다 다른 수법 조합으로 진행합니다. Truefare는 어느 시나리오에서도 정상 동작합니다." },
   { id: "price", label: "가짜 가격 변동만", hint: "여권 입력 직후 가격이 오르거나 자사 목록으로 이동" },
   { id: "lure", label: "이탈 유도 메일만", hint: "'원래 가격' 메일을 눌러도 상품이 사라짐" },
   { id: "fake", label: "가짜 상품만", hint: "결제 2~3시간 뒤 일방적 취소" },
   { id: "confirm", label: "가짜 확정 메일만", hint: "확정 메일 뒤에도 조회하면 계속 발권 중이고, 72시간 뒤 지연" },
 ];
 
-type Mix = { price: "none" | "firstPay" | "firstList" | "alternate"; lure: boolean; after: "cancel" | "delay" };
+type Mix = { price: "none" | "firstPay" | "firstList" | "alternate"; lure: boolean; after: "cancel" | "delay" | "ticket" };
 
 const SITE_MIX: Record<SiteId, Mix> = {
   faretrap: { price: "firstPay", lure: true, after: "cancel" },
   voyagate: { price: "none", lure: true, after: "delay" },
   pinefly: { price: "firstList", lure: false, after: "cancel" },
+  truefare: { price: "none", lure: false, after: "ticket" },
 };
 
 const FORCED: Record<Exclude<Scenario, "site">, Mix> = {
@@ -30,10 +31,10 @@ const FORCED: Record<Exclude<Scenario, "site">, Mix> = {
   confirm: { price: "none", lure: false, after: "delay" },
 };
 
-const mixOf = (site: SiteId) => (state.scenario === "site" ? SITE_MIX[site] : FORCED[state.scenario]);
+const mixOf = (site: SiteId) => (state.scenario === "site" || SITES[site].honest ? SITE_MIX[site] : FORCED[state.scenario]);
 
 export type Mail = { id: string; from: string; addr: string; subject: string; preview: string; kind: MailKind; at: number; read: boolean; site: SiteId; order: Order };
-export type MailKind = "receipt" | "lure" | "cancel" | "delay";
+export type MailKind = "receipt" | "lure" | "cancel" | "delay" | "ticket";
 export type Sms = { id: string; from: string; body: string; at: number };
 // 알림은 예약 시점의 주문을 들고 있어, 그 사이 새 주문을 시작해도 내용이 바뀌지 않는다.
 type Scheduled = { at: number; type: "lure" | "cancel" | "delay"; order: Order };
@@ -49,6 +50,7 @@ export type Order = {
   surge: number;
   extras: Extra[];
   pnr?: string;
+  ticketNo?: string;
   paidTotal?: number;
   status: "draft" | "checkout" | "paid" | "cancelled";
 };
@@ -154,6 +156,10 @@ const INITIAL_EXTRAS: Record<SiteId, Extra[]> = {
     { id: "bag", label: "위탁 수하물 20kg", price: 52000, on: false },
     { id: "seat", label: "좌석 지정", price: 15000, on: true },
   ],
+  truefare: [
+    { id: "insurance", label: "여행 보험", price: 18000, on: false },
+    { id: "bag", label: "위탁 수하물 20kg", price: 45000, on: false },
+  ],
 };
 
 export function setExtra(id: string, on: boolean) {
@@ -235,17 +241,15 @@ export function pay() {
   const pnr = Math.random().toString(36).slice(2, 8).toUpperCase();
   const total = checkoutTotal(order);
   const name = SITES[order.site].name;
-  const paid: Order = { ...order, status: "paid", pnr, paidTotal: total };
+  const after = mixOf(order.site).after;
+  const ticketNo = after === "ticket" ? `180-${String(Math.floor(Math.random() * 1e10)).padStart(10, "0")}` : undefined;
+  const paid: Order = { ...order, status: "paid", pnr, ticketNo, paidTotal: total };
   const next: Scheduled[] = [...scheduled.filter((s) => s.type !== "lure")];
-  if (mixOf(order.site).after === "delay") next.push({ at: now + 73 * 3_600_000, type: "delay", order: paid });
-  else next.push({ at: now + 2.5 * 3_600_000, type: "cancel", order: paid });
-  const receipt = addMail(
-    paid,
-    "receipt",
-    `[${name}] 예약이 확정되었습니다 (예약번호 ${pnr})`,
-    `결제 금액 ${won(total)}. 항공권은 결제 후 72시간 이내에 발권됩니다.`,
-    now + 60_000,
-  );
+  if (after === "delay") next.push({ at: now + 73 * 3_600_000, type: "delay", order: paid });
+  if (after === "cancel") next.push({ at: now + 2.5 * 3_600_000, type: "cancel", order: paid });
+  const receipt = after === "ticket"
+    ? addMail(paid, "ticket", `[${name}] 전자티켓이 발급되었습니다 (예약번호 ${pnr})`, `결제 금액 ${won(total)}. 전자티켓 번호 ${ticketNo}.`, now + 60_000)
+    : addMail(paid, "receipt", `[${name}] 예약이 확정되었습니다 (예약번호 ${pnr})`, `결제 금액 ${won(total)}. 항공권은 결제 후 72시간 이내에 발권됩니다.`, now + 60_000);
   set({
     order: paid,
     scheduled: next,

@@ -164,7 +164,8 @@ export function Results() {
   );
 }
 
-const SITE_ORDER: SiteId[] = ["faretrap", "voyagate", "pinefly"];
+const SITE_ORDER: SiteId[] = ["faretrap", "voyagate", "pinefly", "truefare"];
+const SELLER_COUNT = SITE_ORDER.length + OTHER_SELLERS.length;
 
 export function Booking({ id, ret }: { id: string; ret?: string }) {
   const { search } = useStore();
@@ -183,7 +184,7 @@ export function Booking({ id, ret }: { id: string; ret?: string }) {
   const base = sellerFare("faretrap", search, f.id, r?.id);
   return (
     <div className="g-page">
-      {(loading || arrived < 5) && <TopBar />}
+      {(loading || arrived < SELLER_COUNT) && <TopBar />}
       <Header />
       <main className="g-main">
         <h2 className="g-h2">{AIRPORTS[search.from]} {r ? "⇄" : "→"} {AIRPORTS[search.to]}</h2>
@@ -202,7 +203,7 @@ export function Booking({ id, ret }: { id: string; ret?: string }) {
           <span className="g-stop"><b>{r.stops ? `경유 ${r.stops}회` : "직항"}</b></span>
         </div></li>}</ul>
         <h2 className="g-h2">예약 옵션</h2>
-        <ul className="g-list g-sellers" aria-busy={arrived < 5}>
+        <ul className="g-list g-sellers" aria-busy={arrived < SELLER_COUNT}>
           {SITE_ORDER.map((site, i) => (
             <li key={site}>
               <b>{SITES[site].name}에서 예약</b>
@@ -213,8 +214,8 @@ export function Booking({ id, ret }: { id: string; ret?: string }) {
           {OTHER_SELLERS.map((s, i) => (
             <li key={s.name}>
               <b>{s.name}에서 예약</b>
-              {arrived > i + 3 ? <span className="g-seller-price">{won(base + s.delta * seats(search))}</span> : <Sk w={90} h={16} />}
-              <button className="g-secondary" onClick={() => setHint(`이 데모는 ${SITE_ORDER.map((x) => SITES[x].name).join(", ")} 흐름만 재현합니다.`)}>계속</button>
+              {arrived > i + SITE_ORDER.length ? <span className="g-seller-price">{won(base + s.delta * seats(search))}</span> : <Sk w={90} h={16} />}
+              <button className="g-secondary" onClick={() => setHint(`이 데모는 ${SITE_ORDER.map((x) => SITES[x].name).join(", ")} 흐름만 제공합니다.`)}>계속</button>
             </li>
           ))}
         </ul>

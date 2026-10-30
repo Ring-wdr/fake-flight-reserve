@@ -21,7 +21,7 @@ export function Shell({ stage, children, bottom }: { stage: Stage; children: Rea
   };
   return (
     <div className={`o-page site-${site}`}>
-      {site === "faretrap" && (
+      {(site === "faretrap" || site === "truefare") && (
         <header className="o-head">
           <a className="o-logo" href="#/ota/list" onClick={toList}>{name}</a>
           <ol className="o-steps">
@@ -144,7 +144,7 @@ function Summary({ fees, children }: { fees?: boolean; children?: ReactNode }) {
       <h3>요금 상세정보</h3>
       <p className="o-line"><span>항공권 ({travellers(order.search)}명)</span><span>{won(order.fare)}</span></p>
       {order.surge > 0 && <p className="o-line up"><span>가격 변동</span><span>+{won(order.surge)}</span></p>}
-      {fees && <p className="o-line"><span>{SITES[order.site].serviceLabel}</span><span>{won(feeTotal(order))}</span></p>}
+      {fees && !SITES[order.site].honest && <p className="o-line"><span>{SITES[order.site].serviceLabel}</span><span>{won(feeTotal(order))}</span></p>}
       {on.map((e) => <p className="o-line" key={e.id}><span>{e.label}</span><span>{won(e.price * n)}</span></p>)}
       <p className="o-total"><span>{fees ? "총 금액" : "현재 금액"}</span><b data-testid="total">{won(fees ? checkoutTotal(order) : checkoutTotal(order) - feeTotal(order))}</b></p>
       {children}
@@ -251,7 +251,9 @@ function PassengerCards({ filled, onFill }: { filled: boolean; onFill: () => voi
           </div>
         </div>
       ))}
-      <Flag title="정보 먼저, 가격은 나중">민감한 여권 정보를 모두 받은 뒤에야 가격을 '재확인'합니다. 입력에 들인 수고 때문에 인상된 가격도 받아들이기 쉬워집니다.</Flag>
+      {SITES[order!.site].honest
+        ? <Flag ok title="가격 유지">여권 정보를 입력해도 앞에서 본 가격이 그대로 유지됩니다.</Flag>
+        : <Flag title="정보 먼저, 가격은 나중">민감한 여권 정보를 모두 받은 뒤에야 가격을 '재확인'합니다. 입력에 들인 수고 때문에 인상된 가격도 받아들이기 쉬워집니다.</Flag>}
     </section>
   );
 }
@@ -372,7 +374,9 @@ export function Passenger() {
             <section className="o-card">
               <h2>추가 서비스</h2>
               {order.extras.filter((e) => e.id !== "fast").map((e) => <ExtraRow key={e.id} id={e.id} />)}
-              <Flag title="끼워팔기">유료 옵션이 미리 체크되어 있습니다. 직접 해제하지 않으면 결제 금액에 포함됩니다.</Flag>
+              {site === "truefare"
+                ? <Flag ok title="선택 옵션">유료 옵션은 미리 선택되어 있지 않습니다. 직접 고른 것만 결제됩니다.</Flag>
+                : <Flag title="끼워팔기">유료 옵션이 미리 체크되어 있습니다. 직접 해제하지 않으면 결제 금액에 포함됩니다.</Flag>}
             </section>
           )}
           {site !== "voyagate" && <button className="o-pay" onClick={next}>{site === "pinefly" ? "계속" : "결제하기"}</button>}
@@ -500,7 +504,8 @@ export function Checkout() {
           <button className="o-leave" onClick={leaveToList}>결제하지 않고 나가기</button>
         </div>
         <Summary fees>
-          <Flag title="숨은 요금">{`앞 단계에 없던 ${SITES[site].serviceLabel}가 마지막 결제 화면에서야 나타납니다. 처음 비교한 가격과 달라집니다.`}</Flag>
+          {SITES[site].honest && <Flag ok title="숨은 요금 없음">세금과 수수료가 포함된 가격입니다. 앞 단계에서 본 금액과 같습니다.</Flag>}
+          {!SITES[site].honest && <Flag title="숨은 요금">{`앞 단계에 없던 ${SITES[site].serviceLabel}가 마지막 결제 화면에서야 나타납니다. 처음 비교한 가격과 달라집니다.`}</Flag>}
         </Summary>
       </main>
     </Shell>
@@ -517,8 +522,18 @@ export function Complete() {
           <span className="ms ok">check_circle</span>
           <h2>결제가 완료되었습니다</h2>
           <p>예약번호 <b>{order.pnr}</b></p>
-          <p className="o-muted">결제 금액 {won(order.paidTotal ?? 0)} · 전자티켓은 72시간 이내에 메일로 보내드립니다.</p>
-          <Flag title="가짜 상품">이 시점에 실제 좌석은 확보되어 있지 않습니다. 결제부터 받고, 나중에 취소하거나 발권을 미룹니다.</Flag>
+          {order.ticketNo ? (
+            <>
+              <p>전자티켓 번호 <b data-testid="ticket-no">{order.ticketNo}</b></p>
+              <p className="o-muted">결제 금액 {won(order.paidTotal ?? 0)} · 전자티켓이 발급되어 메일로 발송되었습니다.</p>
+              <Flag ok title="즉시 발권">결제 직후 전자티켓이 발급됩니다. 나중에 취소되거나 발권이 미뤄지지 않습니다.</Flag>
+            </>
+          ) : (
+            <>
+              <p className="o-muted">결제 금액 {won(order.paidTotal ?? 0)} · 전자티켓은 72시간 이내에 메일로 보내드립니다.</p>
+              <Flag title="가짜 상품">이 시점에 실제 좌석은 확보되어 있지 않습니다. 결제부터 받고, 나중에 취소하거나 발권을 미룹니다.</Flag>
+            </>
+          )}
           <a className="o-link" href="#/mail">메일함 확인</a>
         </section>
       </main>
@@ -553,6 +568,12 @@ export function Gone() {
   );
 }
 
+const HONEST_REPLIES: Record<string, string> = {
+  "상담원 연결해 주세요": "상담원에게 연결합니다. 현재 예상 대기 시간은 2분입니다.",
+  "환불은 언제 되나요?": "항공사 환불 규정에 따라 처리되며, 취소를 접수하면 처리 일정을 메일로 안내해 드립니다.",
+  "왜 취소됐나요?": "고객님의 예약에는 취소 내역이 없습니다. 전자티켓은 정상적으로 유효합니다.",
+};
+
 const BOT = "문의 내용이 접수되었습니다. 환불은 카드사 사정에 따라 영업일 기준 최대 30일이 소요될 수 있습니다. 추가 문의는 고객센터 메일로 보내 주세요.";
 
 export function Support() {
@@ -561,7 +582,7 @@ export function Support() {
   const loading = useLoad(800);
   const ask = (text: string) => {
     setLog((l) => [...l, { me: true, text }]);
-    setTimeout(() => setLog((l) => [...l, { me: false, text: BOT }]), 900);
+    setTimeout(() => setLog((l) => [...l, { me: false, text: SITES[site].honest ? HONEST_REPLIES[text] : BOT }]), 900);
   };
   if (loading) return <StageSkeleton stage="done" />;
   return (
@@ -572,7 +593,8 @@ export function Support() {
           <div className="o-log" role="log">
             {log.map((m, i) => <p key={i} className={m.me ? "me" : ""}>{m.text}</p>)}
           </div>
-          <Flag title="환불·상담 지연">어떤 질문에도 같은 답을 반복합니다. 상담원 연결 경로가 없고, 환불 기한은 '최대'라는 말로 늘어납니다.</Flag>
+          {SITES[site].honest && <Flag ok title="상담 연결">질문에 맞는 답을 주고 상담원 연결 경로가 있습니다.</Flag>}
+          {!SITES[site].honest && <Flag title="환불·상담 지연">어떤 질문에도 같은 답을 반복합니다. 상담원 연결 경로가 없고, 환불 기한은 '최대'라는 말로 늘어납니다.</Flag>}
           <div className="o-quick">
             <button onClick={() => ask("상담원 연결해 주세요")}>상담원 연결</button>
             <button onClick={() => ask("환불은 언제 되나요?")}>환불 일정 문의</button>
@@ -584,9 +606,14 @@ export function Support() {
   );
 }
 
-type TicketStatus = "issuing" | "delayed" | "cancelled";
+type TicketStatus = "issuing" | "delayed" | "cancelled" | "ticketed";
 
 const STATUS_COPY: Record<TicketStatus, { label: string; desc: string; steps: [string, boolean][] }> = {
+  ticketed: {
+    label: "발권 완료",
+    desc: "항공권이 발권되었습니다. 전자티켓 번호로 탑승 수속을 할 수 있습니다.",
+    steps: [["예약 접수", true], ["결제 확인", true], ["항공권 발권", true], ["전자티켓 발급", true]],
+  },
   issuing: {
     label: "발권 진행 중",
     desc: "결제가 확인되어 발권을 진행하고 있습니다. 전자티켓은 결제 후 72시간 이내에 발급됩니다.",
@@ -611,7 +638,7 @@ export function Lookup() {
   const [state, setState] = useState<"idle" | "loading" | "done">("idle");
   // 메일 속 주문은 발송 시점 값이므로, 현재 상태는 이후 도착한 메일로 판단한다.
   const related = mails.filter((m) => m.order.pnr && m.order.pnr === order?.pnr);
-  const status: TicketStatus = related.some((m) => m.kind === "cancel") ? "cancelled" : related.some((m) => m.kind === "delay") ? "delayed" : "issuing";
+  const status: TicketStatus = order?.ticketNo ? "ticketed" : related.some((m) => m.kind === "cancel") ? "cancelled" : related.some((m) => m.kind === "delay") ? "delayed" : "issuing";
   const copy = STATUS_COPY[status];
   return (
     <div className="l-page">
@@ -631,10 +658,11 @@ export function Lookup() {
             <dl>
               <dt>항공편</dt><dd>{f.airline} {f.code} · {f.dep} → {f.arr}</dd>
               <dt>출발일</dt><dd>{dateLabel(order.search.date)}</dd>
-              <dt>전자티켓 번호</dt><dd>{status === "cancelled" ? "발급되지 않음" : "발급 전"}</dd>
+              <dt>전자티켓 번호</dt><dd>{order.ticketNo ?? (status === "cancelled" ? "발급되지 않음" : "발급 전")}</dd>
             </dl>
           </section>
         )}
+        {state === "done" && order?.pnr && status === "ticketed" && <Flag ok title="즉시 발권">메일과 항공사 조회의 전자티켓 번호가 같고, 상태도 시간이 지나도 바뀌지 않습니다.</Flag>}
         {state === "done" && order?.pnr && status === "issuing" && <Flag title="가짜 확정 메일">메일에는 '확정'이라고 쓰여 있지만 실제 상태는 발권 중이고 전자티켓 번호도 없습니다. '진행 중' 표시가 사용자를 안심시키는 사이 72시간의 취소 여지가 남습니다.</Flag>}
         {state === "done" && order?.pnr && status === "delayed" && <Flag title="가짜 확정 메일">약속한 72시간이 지나도 상태만 바뀔 뿐 전자티켓은 나오지 않습니다.</Flag>}
         {state === "done" && order?.pnr && status === "cancelled" && <Flag title="가짜 상품">조금 전까지 '발권 진행 중'이던 예약이 일방적으로 취소되었습니다. 전자티켓은 한 번도 발급되지 않았습니다.</Flag>}

@@ -128,6 +128,43 @@ await page.click(".sl-search");
 await wait(100);
 await page.waitForSelector(".sl-row button", { timeout: 8000 });
 out.researchBusiness = { economy: a1, business: await anchorNow() };
+
+// 정상 판매처: 강제 시나리오에서도 가격이 일정하고 수법이 발동하지 않는다.
+await page.evaluate(() => {
+  const raw = JSON.parse(localStorage.getItem("ffr-state-v3"));
+  raw.site = "truefare"; raw.listing = null; raw.notice = null; raw.search = { ...raw.search, cabin: "economy" };
+  localStorage.setItem("ffr-state-v3", JSON.stringify(raw));
+  location.hash = "/ota/list";
+  location.reload();
+});
+await wait(100);
+await page.waitForSelector(".sl-row button", { timeout: 8000 });
+const tfPrices = () => page.evaluate(() => [...document.querySelectorAll(".sl-price")].map((p) => +p.dataset.price).join());
+const tf1 = await tfPrices();
+await page.click(".sl-search");
+await wait(100);
+await page.waitForSelector(".sl-row button", { timeout: 8000 });
+const tf = { stablePrices: tf1 === (await tfPrices()), seatsShown: await page.evaluate(() => document.querySelectorAll(".sl-seats").length) };
+await page.click('.sl-row button[data-airline="한빛항공"]');
+await page.waitForSelector(".o-sample", { timeout: 8000 });
+tf.preselected = await page.evaluate(() => [...document.querySelectorAll(".o-extra input")].filter((i) => i.checked).length);
+await page.click("text=샘플 데이터 채우기");
+const shown = await page.evaluate(() => document.querySelector("[data-testid=total]").innerText);
+await page.click(".o-pay");
+await page.waitForSelector('text="결제 방법을 선택하세요"', { timeout: 8000 });
+await wait(1400);
+tf.priceChanged = await page.evaluate(() => !!document.querySelector(".o-line.up"));
+tf.sameTotal = shown === (await page.evaluate(() => document.querySelector("[data-testid=total]").innerText));
+tf.timer = await page.evaluate(() => !!document.querySelector(".o-timer"));
+await page.click("text=결제하지 않고 나가기");
+await wait();
+tf.lureScheduled = await page.evaluate(() => JSON.parse(localStorage.getItem("ffr-state-v3")).scheduled.length);
+out.truefare = tf;
+
+// 네 판매처 가격 순서
+await page.evaluate(() => { location.hash = "/booking/f1"; });
+await page.waitForSelector('.g-primary[data-site="truefare"]:not([disabled])', { timeout: 8000 });
+out.sellers = await page.evaluate(() => [...document.querySelectorAll(".g-sellers li")].slice(0, 4).map((l) => l.innerText.replace(/\n/g, " ")));
 await page.selectOption("#scenario", "fake");
 await wait();
 await page.evaluate(() => { location.hash = "/"; });
@@ -149,7 +186,7 @@ out.timerAfterReload = await timer();
 await page.cdp("Emulation.setDeviceMetricsOverride", { width: 390, height: 800, deviceScaleFactor: 2, mobile: true });
 await page.click(".panel-head .icon-btn");
 const overflow = {};
-for (const site of ["faretrap", "voyagate", "pinefly"]) {
+for (const site of ["faretrap", "voyagate", "pinefly", "truefare"]) {
   await page.evaluate((s) => {
     const raw = JSON.parse(localStorage.getItem("ffr-state-v3"));
     raw.site = s; raw.order = { ...raw.order, site: s };
@@ -168,6 +205,33 @@ for (const r of ["/", "/results", "/booking/f1", "/ota/list", "/mail"]) {
   overflow[r] = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
 }
 out.overflow = overflow;
+
+// 모바일 승객 시트: 모든 버튼이 화면 안에 있고 실제로 눌린다.
+const sheet = {};
+for (const [name, hash, scope] of [["meta", "/", ""], ["seller", "/ota/list", ".o-search "]]) {
+  await page.evaluate((h) => { location.hash = h; }, hash);
+  await wait(1800);
+  await page.evaluate((sc) => window.scrollTo(0, document.querySelector(`${sc}.g-pax`).getBoundingClientRect().top + scrollY - 200), scope);
+  await wait(200);
+  await page.click(`${scope}[aria-label^="승객"]`);
+  await wait(300);
+  const before = await page.evaluate(() => document.querySelector('[aria-label^="성인 "][aria-label$="명"]').innerText);
+  await page.click(`${scope}[aria-label="성인 늘리기"]`);
+  await wait(200);
+  const r = await page.evaluate(() => {
+    const boxes = [...document.querySelectorAll(".g-pax-pop button")].map((b) => b.getBoundingClientRect());
+    return {
+      allVisible: boxes.every((b) => b.left >= 0 && b.right <= innerWidth && b.top >= 0 && b.bottom <= innerHeight),
+      minTouch: Math.min(...boxes.map((b) => b.height)),
+      adults: document.querySelector('[aria-label^="성인 "][aria-label$="명"]').innerText,
+    };
+  });
+  sheet[name] = { before, ...r };
+  if (name === "meta") await page.screenshot({ path: `${ROOT}/mobile-passenger-sheet.png` });
+  await page.click(".g-pax-done");
+  await wait(200);
+}
+out.sheet = sheet;
 console.log(JSON.stringify(out, null, 1));
 await page.cdp("Emulation.clearDeviceMetricsOverride", {});
 await task.finish({ keep: [] });
