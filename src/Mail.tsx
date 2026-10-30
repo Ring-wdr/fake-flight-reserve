@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { BRAND } from "./brand";
 import { FLIGHTS, won } from "./data";
 import { Flag } from "./Flag";
+import { TopBar, useLoad } from "./Skeleton";
 import { checkoutTotal, flightOf, fmtTime, getState, go, set, useStore, type Mail } from "./store";
 
 const FILLER = [
@@ -16,7 +17,7 @@ function Body({ mail }: { mail: Mail }) {
   if (mail.kind === "lure")
     return (
       <div className="m-letter">
-        <h2>{BRAND.ota}</h2>
+        <h2>{mail.from}</h2>
         <p>고객님, 결제를 완료하지 않으셨어요.</p>
         <p><b>지금 결제하시면 원래 가격 {won(mail.fare ?? 0)}으로 예약할 수 있습니다.</b> 좌석이 곧 마감됩니다.</p>
         {lureFlight && <p className="m-box">{lureFlight.airline} {lureFlight.code}<br />{lureFlight.dep} → {lureFlight.arr}</p>}
@@ -27,7 +28,7 @@ function Body({ mail }: { mail: Mail }) {
   if (mail.kind === "receipt")
     return (
       <div className="m-letter">
-        <h2>{BRAND.ota}</h2>
+        <h2>{mail.from}</h2>
         <p>예약이 <b>확정</b>되었습니다.</p>
         <p className="m-box">예약번호 {order?.pnr}<br />{f?.airline} {f?.code} · {f?.dep} → {f?.arr}<br />결제 금액 {order ? won(order.paidTotal ?? checkoutTotal(order)) : ""}</p>
         <p className="m-small">전자티켓은 결제 후 72시간 이내에 발권됩니다.</p>
@@ -38,7 +39,7 @@ function Body({ mail }: { mail: Mail }) {
   if (mail.kind === "cancel")
     return (
       <div className="m-letter">
-        <h2>{BRAND.ota}</h2>
+        <h2>{mail.from}</h2>
         <p>항공사 사정으로 좌석이 확보되지 않아 예약번호 <b>{order?.pnr}</b>이(가) 취소되었습니다.</p>
         <p>결제 금액 {order ? won(order.paidTotal ?? 0) : ""}은 카드사 사정에 따라 <b>영업일 기준 최대 30일</b> 이내에 환불됩니다.</p>
         <a className="m-cta" href="#/ota/support">고객센터 문의</a>
@@ -47,7 +48,7 @@ function Body({ mail }: { mail: Mail }) {
     );
   return (
     <div className="m-letter">
-      <h2>{BRAND.ota}</h2>
+      <h2>{mail.from}</h2>
       <p>예약번호 <b>{order?.pnr}</b>의 발권이 항공사 시스템 사정으로 지연되고 있습니다.</p>
       <p>약속한 72시간이 지났지만 전자티켓은 아직 발급되지 않았습니다. 조금만 더 기다려 주세요.</p>
       <a className="m-cta" href="#/ota/support">고객센터 문의</a>
@@ -74,11 +75,23 @@ function Rail() {
 export function MailApp({ id }: { id?: string }) {
   const { mails, now } = useStore();
   const mail = mails.find((m) => m.id === id);
+  // 앱에 처음 들어올 때의 로딩 화면과 메일을 열 때의 얇은 진행 표시.
+  const booting = useLoad(1300);
+  const opening = useLoad(350, id);
   useEffect(() => {
     if (mail && !mail.read) set({ mails: getState().mails.map((m) => (m.id === mail.id ? { ...m, read: true } : m)) });
   }, [mail?.id]);
+  if (booting)
+    return (
+      <div className="m-boot" role="status" aria-label="메일 불러오는 중">
+        <span className="ms">mail</span>
+        <b>{BRAND.mail}</b>
+        <i><u /></i>
+      </div>
+    );
   return (
     <div className="m-page">
+      {opening && <TopBar />}
       <header className="m-head">
         <button className="icon-btn" aria-label="메뉴"><span className="ms">menu</span></button>
         <a className="m-logo" href="#/mail"><span className="ms">mail</span>{BRAND.mail}</a>

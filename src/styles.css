@@ -236,3 +236,100 @@ a { color: inherit; text-decoration: none; }
   .m-read h1, .m-letter { margin-left: 0; }
   .panel { width: calc(100vw - 24px); }
 }
+
+/* 스켈레톤 */
+.sk { display: block; background: linear-gradient(90deg, var(--sk1, #e4e8ec) 25%, var(--sk2, #f3f5f7) 50%, var(--sk1, #e4e8ec) 75%); background-size: 200% 100%; animation: shimmer 1.3s linear infinite; }
+.g-page { --sk1: #3c4043; --sk2: #4c5054; }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.top-bar { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 60; background: linear-gradient(90deg, transparent, #8ab4f8, transparent); background-size: 40% 100%; background-repeat: no-repeat; animation: slide 1s linear infinite; }
+@keyframes slide { from { background-position: -40% 0; } to { background-position: 140% 0; } }
+.static-sk { cursor: default; }
+.g-mini-spin { display: inline-block; width: 14px; height: 14px; border: 2px solid #5f6368; border-top-color: var(--g-accent); border-radius: 50%; animation: spin 1s linear infinite; vertical-align: -2px; }
+.m-boot { height: calc(100vh - 26px); background: #fff; color: #5f6368; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.m-boot .ms { font-size: 64px; color: #c5221f; }
+.m-boot i { width: 240px; height: 3px; background: #e8eaed; overflow: hidden; }
+.m-boot u { display: block; width: 40%; height: 100%; background: #c5221f; animation: slide-in 1s ease-in-out infinite; }
+@keyframes slide-in { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+@media (prefers-reduced-motion: reduce) { .sk, .top-bar, .m-boot u, .o-spin, .g-mini-spin, .p-progress { animation: none; } }
+
+/* 검색 입력 */
+.g-opt { display: flex; align-items: center; gap: 6px; background: none; border: 0; color: var(--g-text); font-size: 14px; padding: 0; }
+.g-opt select { background: transparent; border: 0; color: var(--g-text); font-size: 14px; outline: none; color-scheme: dark; }
+.g-opt select option { background: #303134; }
+.g-pax { position: relative; }
+.g-pax-pop { position: absolute; top: 30px; left: 0; z-index: 20; width: 280px; background: #303134; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.6); padding: 12px 14px; display: grid; gap: 10px; }
+.g-count { display: grid; grid-template-columns: 1fr 28px 20px 28px; align-items: center; gap: 6px; text-align: center; }
+.g-count span { text-align: left; font-size: 14px; }
+.g-count small { display: block; font-size: 11px; color: var(--g-muted); }
+.g-count button { width: 28px; height: 28px; border-radius: 4px; border: 0; background: var(--g-tab); color: var(--g-accent); font-size: 18px; line-height: 1; }
+.g-count button:disabled { opacity: .35; cursor: default; }
+.g-pax-done { justify-self: end; background: none; border: 0; color: var(--g-accent); font-weight: 500; }
+.g-cap { color: var(--g-muted) !important; font-weight: 400; }
+.g-picked { color: var(--g-text); }
+.g-link { background: none; border: 0; color: var(--g-accent); padding: 0 4px; font-size: 12px; }
+.g-primary:disabled { opacity: .4; cursor: default; }
+.o-pax-title { font-size: 14px; margin: 18px 0 0; }
+.p-lock h2 { margin-bottom: 4px; }
+
+/* 3단계형 판매사 */
+.site-voyagate { --o-brand: #0d0d0d; --o-brand-2: #6ccff6; background: #eef0f2; }
+.site-voyagate .o-head { background: #000; }
+.site-voyagate .o-logo { letter-spacing: 2px; font-weight: 500; color: #6ccff6; }
+.site-voyagate .o-pay { background: #6ccff6; color: #0d0d0d; border-radius: 6px; }
+.site-voyagate .o-ghost { border-color: #0d0d0d; color: #0d0d0d; border-radius: 6px; }
+.site-voyagate .o-sample { background: #eaf8fe; color: #0d0d0d; border-color: #6ccff6; }
+.site-voyagate .o-link { color: #1864ab; }
+.site-voyagate .o-card { border-radius: 8px; }
+.site-voyagate .o-spin { border-color: #dceff8; border-top-color: #0d0d0d; }
+.v-step { max-width: 1040px; margin: 0 auto; padding: 14px 16px 0; color: #52606d; font-size: 14px; }
+.v-title { font-size: 26px; font-weight: 500; margin: 0 0 14px; }
+.v-hero { display: grid; grid-template-columns: 1fr 1fr; background: #fff; border-radius: 10px; overflow: hidden; margin-bottom: 14px; }
+.v-hero > div:first-child { padding: 20px 24px; }
+.v-hero h2 { font-size: 18px; margin: 0 0 10px; }
+.v-photo { background: linear-gradient(160deg, #a7c8d8, #3b8a93 60%, #1f5f66); display: flex; align-items: center; justify-content: center; padding: 20px; min-height: 240px; }
+.v-photo ul { list-style: none; margin: 0; padding: 14px 18px; background: rgba(255,255,255,.72); border-radius: 8px; font-size: 14px; display: grid; gap: 10px; }
+.v-photo .ms { color: #2b8a3e; margin-right: 6px; }
+.v-bar { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid #d5dbe1; z-index: 20; }
+.v-bar-in { max-width: 1040px; margin: 0 auto; padding: 10px 268px 10px 16px; display: flex; align-items: center; gap: 16px; }
+.v-bar-label { flex: 1; }
+.v-bar-price { text-align: right; }
+.v-bar-price b { display: block; font-size: 22px; font-weight: 500; }
+.v-bar-price small { font-size: 12px; color: #52606d; }
+.v-bar .o-pay { width: 120px; }
+.v-foot { text-align: center; font-size: 12px; color: var(--o-muted); padding: 0 16px 90px; margin-top: -200px; }
+.v-enter { min-height: 60vh; display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; color: #52606d; }
+
+/* 다단계형 판매사 */
+.site-pinefly { --o-brand: #2f7d68; --o-brand-2: #3f9b82; --o-red: #c2410c; background: #fff; }
+.site-pinefly .o-head { background: #fff; color: #1f2933; border-bottom: 1px solid #e5e8eb; }
+.site-pinefly .o-logo { color: var(--o-brand); display: flex; align-items: center; gap: 4px; font-weight: 500; }
+.site-pinefly .o-pay { background: var(--o-brand); border-radius: 8px; }
+.site-pinefly .o-ghost { border-radius: 8px; }
+.site-pinefly .o-card, .site-pinefly .o-side { border: 1px solid #e5e8eb; border-radius: 10px; }
+.p-steps { list-style: none; display: flex; margin: 0 auto; padding: 16px; max-width: 1040px; overflow-x: auto; }
+.p-steps li { flex: 1 0 84px; display: grid; justify-items: center; gap: 6px; font-size: 12px; color: #7b8794; position: relative; }
+.p-steps li::before { content: ""; position: absolute; top: 12px; left: -50%; width: 100%; height: 2px; background: #e5e8eb; }
+.p-steps li:first-child::before { display: none; }
+.p-steps li.done::before, .p-steps li.on::before { background: var(--o-brand); }
+.p-steps i { position: relative; z-index: 1; width: 26px; height: 26px; border-radius: 50%; background: #e5e8eb; color: #52606d; display: inline-flex; align-items: center; justify-content: center; font-style: normal; }
+.p-steps li.done i, .p-steps li.on i { background: var(--o-brand); color: #fff; }
+.p-steps li.on { color: #1f2933; font-weight: 700; }
+.p-enter { display: grid; justify-items: center; padding: 60px 16px 200px; text-align: center; }
+.p-enter h2 { margin: 12px 0 4px; font-size: 20px; }
+.p-ticket { font-size: 72px; color: var(--o-brand); }
+.p-enter-card { position: relative; overflow: hidden; width: 100%; max-width: 420px; margin-top: 20px; border: 1px solid #e5e8eb; border-radius: 10px; padding: 18px; display: grid; gap: 4px; }
+.p-enter-card small { color: var(--o-muted); }
+.p-progress { position: absolute; top: 0; left: 0; height: 4px; width: 100%; background: var(--o-brand); transform-origin: left; animation: fill 2.6s linear; }
+@keyframes fill { from { transform: scaleX(0); } }
+.p-tiers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.p-tiers button { position: relative; background: #fff; border: 1px solid #d5dbe1; border-radius: 10px; padding: 16px; text-align: left; display: grid; gap: 4px; }
+.p-tiers button.on { border: 2px solid var(--o-brand); background: #f1f8f6; }
+.p-tiers small { color: var(--o-muted); }
+.p-tiers span { font-weight: 500; margin-top: 6px; }
+.p-tiers i { position: absolute; top: -9px; right: 10px; background: var(--o-brand); color: #fff; font-style: normal; font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+@media (max-width: 760px) {
+  .v-hero, .p-tiers { grid-template-columns: 1fr; }
+  .v-bar-in { padding-right: 16px; }
+  .v-foot { margin-top: -180px; }
+  .o-modal-btns { flex-wrap: wrap; }
+}

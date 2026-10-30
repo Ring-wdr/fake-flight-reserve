@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { BRAND } from "./brand";
 import { advance, fmtTime, go, reset, SCENARIOS, set, useStore, type Scenario } from "./store";
 import { Booking, Home, Results } from "./Flights";
-import { Checkout, Complete, Gone, Lookup, Passenger, Support } from "./Ota";
+import { Checkout, Complete, Enter, Gone, Lookup, Passenger, PineStep, Support, TripSummary } from "./Ota";
 import { MailApp } from "./Mail";
 
 function useRoute() {
@@ -21,8 +21,13 @@ function useRoute() {
 function Page({ route }: { route: string }) {
   if (route === "/") return <Home />;
   if (route === "/results") return <Results />;
-  if (route.startsWith("/booking/")) return <Booking id={route.split("/")[2]} />;
+  if (route.startsWith("/booking/")) return <Booking id={route.split("/")[2]} ret={route.split("/")[3]} />;
+  if (route === "/ota/enter") return <Enter />;
+  if (route === "/ota/summary") return <TripSummary />;
   if (route === "/ota/passenger") return <Passenger />;
+  if (route === "/ota/fare") return <PineStep stage="fare" />;
+  if (route === "/ota/bags") return <PineStep stage="bags" />;
+  if (route === "/ota/seat") return <PineStep stage="seat" />;
   if (route === "/ota/checkout") return <Checkout />;
   if (route === "/ota/complete") return <Complete />;
   if (route === "/ota/gone") return <Gone />;
@@ -139,7 +144,7 @@ export function App() {
       <div className="demo-banner">
         재현 데모입니다. 실제 판매·결제가 없고 입력 정보는 어디에도 전송되지 않습니다. 실제 정보를 입력하지 마세요.
       </div>
-      <Page key={route} route={route} />
+      <Page key={route.startsWith("/mail") ? "/mail" : route} route={route} />
       <Panel />
       <Phone />
       <Toast />

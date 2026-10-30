@@ -1,82 +1,126 @@
-// 영상에 담기지 않은 분기와 모바일 레이아웃을 확인한다.
+// 검색 입력의 가격 반영, 스켈레톤, 영상에 없는 분기, 모바일 레이아웃을 확인한다.
 const task = await taskSpace("dark pattern verify");
 const page = task.page("p1");
-const URL = "http://localhost:5199/";
+const SITE_URL = "http://localhost:5199/";
 const ROOT = "/path/to/fake-flight-reserve/evidence";
 const out = {};
 const wait = (ms = 700) => page.waitForTimeout(ms);
-const setScenario = async (id) => {
-  await page.selectOption("#scenario", id);
-  await wait();
-};
-const toCheckoutOrModal = async () => {
-  await page.click("text=검색");
-  await wait();
-  await page.click('button[aria-label^="한빛항공"]');
-  await wait(300);
-  await page.click('text="항공편 선택"');
-  await wait();
-  await page.click(".g-sellers .g-primary");
-  await wait();
-  await page.click("text=샘플 데이터 채우기");
-  await page.click(".o-pay");
-  await wait(300);
-  await page.click('text="필요 없음"');
-  await wait(3200);
+const ready = () => page.waitForSelector('button[aria-label^="한빛항공"]', { state: "visible", timeout: 8000 });
+const price = async () => {
+  await wait(100);
+  const skeleton = await page.evaluate(() => document.querySelectorAll(".g-list .sk").length);
+  await ready();
+  const value = await page.evaluate(() => document.querySelector('button[aria-label^="한빛항공"] .g-price').innerText.split("\n")[0]);
+  return { value, skeleton };
 };
 
 await page.cdp("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
-await page.goto(URL);
-await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); location.hash = "/"; location.reload(); });
-await wait(1500);
+await page.goto(SITE_URL);
+await page.evaluate(() => { localStorage.clear(); location.hash = "/results"; location.reload(); });
+await wait(300);
+const prices = { base: await price() };
+await page.click('[aria-label^="승객"]');
+await page.click('[aria-label="성인 늘리기"]');
+prices.twoAdults = await price();
+await page.click('[aria-label="어린이 늘리기"]');
+prices.plusChild = await price();
+await page.click('[aria-label="유아 늘리기"]');
+prices.plusInfant = await price();
+await page.click(".g-pax-done");
+await page.selectOption('[aria-label="좌석 등급"]', "business");
+prices.business = await price();
+await page.selectOption('[aria-label="여정 유형"]', "round");
+prices.round = await price();
+await page.selectOption('[aria-label="목적지"]', "NRT");
+prices.routeNrt = await price();
+await page.evaluate(() => {
+  const el = document.querySelector('[aria-label="출발일"]');
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(el, "2026-12-25");
+  el.dispatchEvent(new Event("input", { bubbles: true }));
+});
+prices.peakDate = await price();
+out.prices = prices;
 
-// 가격 변동: 1회차 결제 분기, 2회차 목록 강제 이동
-await setScenario("price");
-await toCheckoutOrModal();
-out.priceFirst = await page.evaluate(() => document.querySelector('[role=alertdialog]')?.getAttribute("aria-label"));
+// 왕복 예약 합계가 결과 목록과 판매처까지 이어지는지 확인한다.
+await page.click('button[aria-label^="한빛항공"]');
+await wait(200);
+await page.click('text="항공편 선택"');
+await ready();
+const roundPrice = await page.evaluate(() => document.querySelector('button[aria-label^="푸른하늘항공"] .g-price').innerText.split("\n")[0]);
+await page.click('button[aria-label^="푸른하늘항공"]');
+await wait(200);
+await page.click('text="항공편 선택"');
+await page.waitForSelector('.g-primary[data-site="faretrap"]:not([disabled])', { timeout: 8000 });
+out.roundTrip = { resultPrice: roundPrice, sellerPrice: await page.evaluate(() => document.querySelector(".g-seller-price").innerText) };
+
+// 강제 시나리오: 가격 변동은 판매처와 상관없이 번갈아 발동한다.
+await page.selectOption("#scenario", "price");
+await wait();
+const toGate = async (site) => {
+  await page.click(".g-explore");
+  await ready();
+  await page.click('button[aria-label^="한빛항공"]');
+  await wait(200);
+  await page.click('text="항공편 선택"');
+  await page.waitForSelector(`.g-primary[data-site="${site}"]:not([disabled])`, { timeout: 8000 });
+  await page.click(`.g-primary[data-site="${site}"]`);
+  await page.waitForSelector(".o-sample", { timeout: 8000 });
+  await page.click("text=샘플 데이터 채우기");
+  await page.click(site === "voyagate" ? ".v-bar .o-pay" : ".o-pay");
+};
+const dialog = () => page.evaluate(() => document.querySelector("[role=alertdialog]")?.getAttribute("aria-label"));
+await toGate("faretrap");
+await wait(300);
+await page.click('text="필요 없음"');
+await page.waitForSelector("[role=alertdialog]", { timeout: 6000 });
+out.forcedFirst = await dialog();
 await page.click("text=다른 항공편 보기");
 await wait();
-out.priceFirstNotice = await page.evaluate(() => document.querySelector(".g-notice")?.innerText);
-await page.click('a.g-logo');
+await page.click("a.g-logo");
 await wait();
-await toCheckoutOrModal();
-out.priceSecond = await page.evaluate(() => document.querySelector('[role=alertdialog]')?.getAttribute("aria-label"));
-await page.click("text=항공편 목록으로");
-await wait();
-out.priceSecondUrl = await page.url();
+await toGate("faretrap");
+await wait(300);
+await page.click('text="필요 없음"');
+await page.waitForSelector("[role=alertdialog]", { timeout: 6000 });
+out.forcedSecond = await dialog();
 
-// 타이머 초기화 + 가짜 확정 메일 지연
-await setScenario("confirm");
-await toCheckoutOrModal();
+// 타이머 초기화
+await page.selectOption("#scenario", "fake");
+await wait();
+await toGate("faretrap");
+await wait(300);
+await page.click('text="필요 없음"');
+await page.waitForSelector(".o-timer", { timeout: 8000 });
 await page.waitForTimeout(4000);
 const timer = () => page.evaluate(() => document.querySelector(".o-timer")?.innerText);
 out.timerBefore = await timer();
 await page.reload();
-await wait(1000);
+await page.waitForSelector(".o-timer", { timeout: 8000 });
 out.timerAfterReload = await timer();
-await page.click("text=샘플 카드 채우기");
-await page.click(".o-pay");
-await page.waitForSelector(".ok", { timeout: 8000 });
-await page.click('button:has-text("+3일")');
-await wait();
-await page.click('button:has-text("메일")');
-await wait();
-out.confirmMails = await page.evaluate(() => [...document.querySelectorAll(".m-list li.unread .m-subj b")].map((x) => x.innerText));
-await page.screenshot({ path: `${ROOT}/21-delay-inbox.png` });
 
 // 모바일 가로 넘침
-const overflow = {};
 await page.cdp("Emulation.setDeviceMetricsOverride", { width: 390, height: 800, deviceScaleFactor: 2, mobile: true });
 await page.click(".panel-head .icon-btn");
-for (const r of ["/", "/results", "/booking/f1", "/ota/passenger", "/ota/support", "/mail"]) {
+const overflow = {};
+for (const site of ["faretrap", "voyagate", "pinefly"]) {
+  await page.evaluate((s) => {
+    const raw = JSON.parse(localStorage.getItem("ffr-state-v2"));
+    raw.order = { ...raw.order, site: s };
+    localStorage.setItem("ffr-state-v2", JSON.stringify(raw));
+    location.hash = "/ota/passenger";
+    location.reload();
+  }, site);
+  await page.waitForSelector(".o-sample", { timeout: 8000 });
+  await wait(300);
+  overflow[site] = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+  await page.screenshot({ path: `${ROOT}/mobile-${site}.png` });
+}
+for (const r of ["/", "/results", "/booking/f1", "/ota/enter", "/mail"]) {
   await page.evaluate((h) => { location.hash = h; }, r);
-  await wait();
+  await wait(1800);
   overflow[r] = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
 }
 out.overflow = overflow;
-await page.evaluate(() => { location.hash = "/results"; });
-await wait();
-await page.screenshot({ path: `${ROOT}/22-mobile-results.png` });
 console.log(JSON.stringify(out, null, 1));
 await page.cdp("Emulation.clearDeviceMetricsOverride", {});
 await task.finish({ keep: [] });
