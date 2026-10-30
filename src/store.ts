@@ -12,7 +12,7 @@ export const SCENARIOS: { id: Scenario; label: string; hint: string }[] = [
   { id: "price", label: "가짜 가격 변동만", hint: "여권 입력 직후 가격이 오르거나 자사 목록으로 이동" },
   { id: "lure", label: "이탈 유도 메일만", hint: "'원래 가격' 메일을 눌러도 상품이 사라짐" },
   { id: "fake", label: "가짜 상품만", hint: "결제 2~3시간 뒤 일방적 취소" },
-  { id: "confirm", label: "가짜 확정 메일만", hint: "예약번호가 항공사에서 조회되지 않고 발권 지연" },
+  { id: "confirm", label: "가짜 확정 메일만", hint: "확정 메일 뒤에도 조회하면 계속 발권 중이고, 72시간 뒤 지연" },
 ];
 
 type Mix = { price: "none" | "firstPay" | "firstList" | "alternate"; lure: boolean; after: "cancel" | "delay" };
