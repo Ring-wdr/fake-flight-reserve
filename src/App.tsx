@@ -4,6 +4,7 @@ import { advance, fmtTime, go, reset, SCENARIOS, set, useStore, type Scenario } 
 import { Booking, Home, Results } from "./Flights";
 import { Checkout, Complete, Enter, Gone, Lookup, Passenger, PineStep, Support, TripSummary } from "./Ota";
 import { MailApp } from "./Mail";
+import { SellerListPage } from "./SellerList";
 
 function useRoute() {
   const [route, setRoute] = useState(location.hash.slice(1) || "/");
@@ -23,6 +24,7 @@ function Page({ route }: { route: string }) {
   if (route === "/results") return <Results />;
   if (route.startsWith("/booking/")) return <Booking id={route.split("/")[2]} ret={route.split("/")[3]} />;
   if (route === "/ota/enter") return <Enter />;
+  if (route === "/ota/list") return <SellerListPage />;
   if (route === "/ota/summary") return <TripSummary />;
   if (route === "/ota/passenger") return <Passenger />;
   if (route === "/ota/fare") return <PineStep stage="fare" />;

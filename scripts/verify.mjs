@@ -75,18 +75,65 @@ await page.click('text="필요 없음"');
 await page.waitForSelector("[role=alertdialog]", { timeout: 6000 });
 out.forcedFirst = await dialog();
 await page.click("text=다른 항공편 보기");
-await wait();
-await page.click("a.g-logo");
-await wait();
-await toGate("faretrap");
+await page.waitForSelector(".sl-row button", { timeout: 8000 });
+out.afterPriceChange = await page.url();
+await page.click('.sl-row button[data-airline="한빛항공"]');
+await page.waitForSelector(".o-sample", { timeout: 8000 });
+await page.click("text=샘플 데이터 채우기");
+await page.click(".o-pay");
 await wait(300);
 await page.click('text="필요 없음"');
 await page.waitForSelector("[role=alertdialog]", { timeout: 6000 });
 out.forcedSecond = await dialog();
+await page.click("text=항공편 목록으로");
+await page.waitForSelector(".sl-row button", { timeout: 8000 });
+out.afterSoldOut = await page.url();
 
-// 타이머 초기화
+// 판매사 목록 검색: 판매처마다 같은 로직으로 기준가 이상만 나오고, 기준가 포함은 무작위다.
+const stats = {};
+for (const site of ["faretrap", "voyagate", "pinefly"]) {
+  await page.evaluate((s) => {
+    const raw = JSON.parse(localStorage.getItem("ffr-state-v3"));
+    raw.site = s; raw.listing = null; raw.notice = null;
+    localStorage.setItem("ffr-state-v3", JSON.stringify(raw));
+    location.hash = "/ota/list";
+    location.reload();
+  }, site);
+  const r = { included: 0, excluded: 0, belowAnchor: 0, wrongAnchorCount: 0, anchors: new Set() };
+  for (let i = 0; i < 8; i++) {
+    await wait(100);
+    await page.waitForSelector(".sl-row button", { timeout: 8000 });
+    const v = await page.evaluate(() => {
+      const l = document.querySelector(".sl-list");
+      return { anchor: +l.dataset.anchor, inc: l.dataset.anchorIncluded === "true", prices: [...document.querySelectorAll(".sl-price")].map((p) => +p.dataset.price) };
+    });
+    r[v.inc ? "included" : "excluded"]++;
+    r.belowAnchor += v.prices.filter((p) => p < v.anchor).length;
+    const atAnchor = v.prices.filter((p) => p === v.anchor).length;
+    if (atAnchor !== (v.inc ? 1 : 0)) r.wrongAnchorCount++;
+    r.anchors.add(v.anchor);
+    await page.click(".sl-search");
+  }
+  r.anchors = [...r.anchors];
+  stats[site] = r;
+}
+out.listStats = stats;
+// 재검색 조건이 기준가에 반영되는지 확인한다.
+await wait(100);
+await page.waitForSelector(".sl-row button", { timeout: 8000 });
+const anchorNow = () => page.evaluate(() => +document.querySelector(".sl-list").dataset.anchor);
+const a1 = await anchorNow();
+await page.selectOption('.o-search [aria-label="좌석 등급"]', "business");
+await page.click(".sl-search");
+await wait(100);
+await page.waitForSelector(".sl-row button", { timeout: 8000 });
+out.researchBusiness = { economy: a1, business: await anchorNow() };
 await page.selectOption("#scenario", "fake");
 await wait();
+await page.evaluate(() => { location.hash = "/"; });
+await wait();
+
+// 타이머 초기화
 await toGate("faretrap");
 await wait(300);
 await page.click('text="필요 없음"');
@@ -104,9 +151,9 @@ await page.click(".panel-head .icon-btn");
 const overflow = {};
 for (const site of ["faretrap", "voyagate", "pinefly"]) {
   await page.evaluate((s) => {
-    const raw = JSON.parse(localStorage.getItem("ffr-state-v2"));
-    raw.order = { ...raw.order, site: s };
-    localStorage.setItem("ffr-state-v2", JSON.stringify(raw));
+    const raw = JSON.parse(localStorage.getItem("ffr-state-v3"));
+    raw.site = s; raw.order = { ...raw.order, site: s };
+    localStorage.setItem("ffr-state-v3", JSON.stringify(raw));
     location.hash = "/ota/passenger";
     location.reload();
   }, site);
@@ -115,7 +162,7 @@ for (const site of ["faretrap", "voyagate", "pinefly"]) {
   overflow[site] = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   await page.screenshot({ path: `${ROOT}/mobile-${site}.png` });
 }
-for (const r of ["/", "/results", "/booking/f1", "/ota/enter", "/mail"]) {
+for (const r of ["/", "/results", "/booking/f1", "/ota/list", "/mail"]) {
   await page.evaluate((h) => { location.hash = h; }, r);
   await wait(1800);
   overflow[r] = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);

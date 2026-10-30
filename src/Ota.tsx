@@ -1,25 +1,29 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { SITES, type SiteId } from "./brand";
 import { AIRPORTS, CABINS, dateLabel, paxLabel, seats, travellers, won } from "./data";
 import { Flag } from "./Flag";
 import { CardSkeleton, Sk, useLoad } from "./Skeleton";
-import { abandonCheckout, checkoutTotal, countPriceHit, fareTotal, feeTotal, flightOf, getState, go, pay, priceOutcome, returnOf, set, setExtra, useStore, type Order } from "./store";
+import { abandonCheckout, checkoutTotal, countPriceHit, fareTotal, feeTotal, flightOf, getState, go, goSellerList, leaveToList, pay, priceOutcome, returnOf, set, setExtra, useStore, type Order } from "./store";
 
-type Stage = "summary" | "passenger" | "fare" | "bags" | "seat" | "checkout" | "done";
+type Stage = "list" | "summary" | "passenger" | "fare" | "bags" | "seat" | "checkout" | "done";
 
 const PINE_STEPS: [Stage | "search", string][] = [["search", "검색"], ["passenger", "탑승객 세부정보"], ["fare", "티켓 요금"], ["bags", "수하물"], ["seat", "좌석"], ["checkout", "요약 & 결제"]];
 const VOY_STEP: Partial<Record<Stage, number>> = { summary: 1, passenger: 2, checkout: 3, done: 3 };
 
-const useSite = (): SiteId => useStore().order?.site ?? "faretrap";
+const useSite = (): SiteId => useStore().site;
 
-function Shell({ stage, children, bottom }: { stage: Stage; children: ReactNode; bottom?: ReactNode }) {
+export function Shell({ stage, children, bottom }: { stage: Stage; children: ReactNode; bottom?: ReactNode }) {
   const site = useSite();
   const name = SITES[site].name;
+  const toList = (e: MouseEvent) => {
+    e.preventDefault();
+    leaveToList();
+  };
   return (
     <div className={`o-page site-${site}`}>
       {site === "faretrap" && (
         <header className="o-head">
-          <a className="o-logo" href="#/">{name}</a>
+          <a className="o-logo" href="#/ota/list" onClick={toList}>{name}</a>
           <ol className="o-steps">
             <li className={stage === "checkout" || stage === "done" ? "" : "on"}><i>1</i>항공편 정보</li>
             <li className={stage === "checkout" || stage === "done" ? "on" : ""}><i>2</i>결제</li>
@@ -31,24 +35,24 @@ function Shell({ stage, children, bottom }: { stage: Stage; children: ReactNode;
       {site === "voyagate" && (
         <>
           <header className="o-head">
-            <a className="o-logo" href="#/">{name.toUpperCase()}</a>
+            <a className="o-logo" href="#/ota/list" onClick={toList}>{name.toUpperCase()}</a>
             <span className="g-grow" />
             <a className="o-help" href="#/ota/support">고객 지원</a>
             <span className="o-help">내 예약</span>
           </header>
-          <p className="v-step">단계 {VOY_STEP[stage] ?? 1}/3</p>
+          {stage !== "list" && <p className="v-step">단계 {VOY_STEP[stage] ?? 1}/3</p>}
         </>
       )}
       {site === "pinefly" && (
         <>
           <header className="o-head">
-            <a className="o-logo" href="#/"><span className="ms">forest</span>{name.toLowerCase()}</a>
+            <a className="o-logo" href="#/ota/list" onClick={toList}><span className="ms">forest</span>{name.toLowerCase()}</a>
             <span className="g-grow" />
             <a className="o-help" href="#/ota/support">도움말 및 고객 지원</a>
           </header>
           <ol className="p-steps">
             {PINE_STEPS.map(([k, label], i) => {
-              const cur = PINE_STEPS.findIndex(([x]) => x === (stage === "done" ? "checkout" : stage));
+              const cur = PINE_STEPS.findIndex(([x]) => x === (stage === "done" ? "checkout" : stage === "list" ? "search" : stage));
               return <li key={k} className={i < cur ? "done" : i === cur ? "on" : ""}><i>{i < cur ? "✓" : i + 1}</i><span>{label}</span></li>;
             })}
           </ol>
@@ -170,10 +174,7 @@ function useGate(onPass: () => void) {
     }, 2600);
   };
   const start = () => (order?.site === "faretrap" ? setModal("upsell") : verify());
-  const back = (notice: string) => {
-    set({ notice, order: null });
-    go("/results");
-  };
+  const back = (notice: string) => goSellerList(notice);
   const fast = order?.extras.find((e) => e.id === "fast");
   const modals = (
     <>
@@ -211,7 +212,7 @@ function useGate(onPass: () => void) {
         <div className="o-modal" role="alertdialog" aria-label="판매 종료">
           <div>
             <h3><span className="ms warn">warning</span>해당 운임의 판매가 종료되었습니다</h3>
-            <p>같은 기간과 목적지의 다른 항공편을 안내해 드립니다.</p>
+            <p>같은 기간과 목적지의 다른 항공권을 자사 목록에서 안내해 드립니다.</p>
             <Flag title="가짜 가격 변동">조금 전까지 '9석 남음'이던 상품이 정보를 모두 입력한 직후 사라지고, 입력한 수고는 그대로 버려집니다.</Flag>
             <div className="o-modal-btns">
               <button className="o-pay small" onClick={() => back("선택하신 항공권은 판매가 종료되었습니다. 다른 항공편을 선택해 주세요.")}>항공편 목록으로</button>
@@ -496,7 +497,7 @@ export function Checkout() {
           >
             {paying ? "결제 처리 중…" : `${won(total)} 지금 결제`}
           </button>
-          <button className="o-leave" onClick={() => go("/results")}>결제하지 않고 나가기</button>
+          <button className="o-leave" onClick={leaveToList}>결제하지 않고 나가기</button>
         </div>
         <Summary fees>
           <Flag title="숨은 요금">{`앞 단계에 없던 ${SITES[site].serviceLabel}가 마지막 결제 화면에서야 나타납니다. 처음 비교한 가격과 달라집니다.`}</Flag>
@@ -531,8 +532,7 @@ export function Gone() {
   useEffect(() => {
     if (loading) return;
     if (left === 0) {
-      set({ notice: "선택하신 항공권은 이미 판매가 종료되었습니다.", order: null });
-      go("/results");
+      goSellerList("선택하신 항공권은 이미 판매가 종료되었습니다.", getState().focusOrder);
       return;
     }
     const t = setTimeout(() => setLeft(left - 1), 1000);
@@ -545,7 +545,7 @@ export function Gone() {
         <section className="o-card o-center">
           <span className="ms warn big">event_busy</span>
           <h2>죄송합니다. 이미 판매가 종료된 상품입니다</h2>
-          <p className="o-muted">{left}초 뒤 항공편 목록으로 이동합니다.</p>
+          <p className="o-muted">{left}초 뒤 다른 항공권 목록으로 이동합니다.</p>
           <Flag title="이탈 유도 메일">'원래 가격 그대로'라던 메일의 링크가 곧바로 판매 종료 화면으로 이어집니다. 사용자를 다시 불러들이는 미끼입니다.</Flag>
         </section>
       </main>
@@ -585,7 +585,8 @@ export function Support() {
 }
 
 export function Lookup() {
-  const { order } = useStore();
+  const { order: current, focusOrder } = useStore();
+  const order = focusOrder ?? current;
   const f = flightOf(order);
   const [state, setState] = useState<"idle" | "loading" | "done">("idle");
   return (

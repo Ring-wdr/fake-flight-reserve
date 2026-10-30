@@ -333,3 +333,49 @@ a { color: inherit; text-decoration: none; }
   .v-foot { margin-top: -300px; }
   .o-modal-btns { flex-wrap: wrap; }
 }
+
+/* 판매사 자체 목록 */
+.o-search { --g-text: var(--o-ink); --g-line: #c4cdd5; --g-muted: #7b8794; --g-accent: var(--o-brand); --g-tab: #e6f1ef; background: #fff; border-radius: 12px; padding: 16px 20px; margin-bottom: 14px; color: var(--o-ink); }
+.o-search .g-field select, .o-search .g-field input, .o-search .g-opt select { color-scheme: light; }
+.o-search select option, .o-search .g-field select option, .o-search .g-opt select option { background: #fff; }
+.o-search .g-swap { background: #fff; }
+.o-search .g-pax-pop { background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+.o-search .g-count button { background: #eef1f4; }
+.sl-search { width: auto !important; margin-top: 12px; padding-left: 36px !important; padding-right: 36px !important; }
+.sl-notice { display: flex; align-items: center; gap: 8px; background: #fff4e6; color: #8a3a00; border-radius: 8px; padding: 6px 12px; margin-bottom: 14px; font-size: 14px; }
+.sl-notice .icon-btn { margin-left: auto; }
+.sl-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 16px; align-items: start; }
+.sl-filter { background: #fff; border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; font-size: 14px; }
+.sl-filter h3 { margin: 0; font-size: 15px; }
+.sl-filter label { display: flex; gap: 8px; align-items: center; }
+.sl-title { font-size: 20px; margin: 0 0 4px; }
+.sl-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
+.sl-row { background: #fff; border-radius: 12px; padding: 14px 16px; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto 84px; gap: 14px; align-items: center; }
+.sl-plane { font-size: 28px; }
+.sl-info { display: grid; gap: 3px; min-width: 0; }
+.sl-info small { font-size: 12px; color: var(--o-muted); }
+.sl-info .sl-seats { color: var(--o-red); font-weight: 500; }
+.sl-price { text-align: right; }
+.sl-price b { display: block; font-size: 18px; color: var(--o-red); }
+.sl-price small { font-size: 11px; color: var(--o-muted); }
+.sl-row .o-pay { width: 84px; padding: 9px; font-size: 14px; }
+.site-voyagate .sl-layout { grid-template-columns: minmax(0, 1fr); }
+.site-voyagate .sl-filter { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; border-radius: 8px; }
+.site-voyagate .o-search { border-radius: 8px; background: #111; --g-text: #fff; --g-line: #555; --g-muted: #aaa; --g-accent: #6ccff6; --g-tab: #333; color: #fff; }
+.site-voyagate .o-search .g-field select, .site-voyagate .o-search .g-field input, .site-voyagate .o-search .g-opt select { color-scheme: dark; }
+.site-voyagate .o-search select option, .site-voyagate .o-search .g-opt select option { background: #222; }
+.site-voyagate .o-search .g-swap, .site-voyagate .o-search .g-pax-pop { background: #222; }
+.site-voyagate .o-search .g-count button { background: #333; }
+.site-voyagate .sl-row { border-radius: 8px; }
+.site-voyagate .sl-price b { color: #0d0d0d; font-weight: 500; }
+.site-pinefly .o-search, .site-pinefly .sl-filter, .site-pinefly .sl-row { border: 1px solid #e5e8eb; border-radius: 10px; }
+@media (max-width: 760px) {
+  .sl-layout { grid-template-columns: minmax(0, 1fr); }
+  .sl-row { grid-template-columns: 30px minmax(0, 1fr) auto; }
+  .sl-row .o-pay { grid-column: 1 / -1; width: 100%; }
+  .sl-filter { display: flex; flex-wrap: wrap; align-items: center; }
+}
+@media (min-width: 1101px) and (max-width: 1560px) {
+  .o-main.sl { margin-left: 0; padding-right: 264px; max-width: none; }
+}
+.o-search .g-search { background: transparent; box-shadow: none; padding: 0; }

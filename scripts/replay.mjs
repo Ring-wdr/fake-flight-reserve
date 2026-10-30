@@ -55,6 +55,7 @@ async function record(site, flow) {
   console.log(site, { frames: n, steps: step });
 }
 
+const waitFor = (sel) => page.waitForSelector(sel, { state: "visible", timeout: 12000 });
 const openRow = (airline) => click(`button[aria-label^="${airline}"]`, "open flight details");
 const chooseSeller = async (site) => {
   await click(`.g-primary[data-site="${site}"]:not([disabled])`, "continue to seller");
@@ -62,6 +63,11 @@ const chooseSeller = async (site) => {
 const select = async (airline) => {
   await openRow(airline);
   await click('text="항공편 선택"', "select the flight");
+};
+const chooseOffer = async (airline) => {
+  await waitFor(`.sl-row button[data-airline="${airline}"]`);
+  await pause(600);
+  await click(`.sl-row button[data-airline="${airline}"]`, "choose from seller list");
 };
 const fill = () => click("text=샘플 데이터 채우기", "fill sample passport");
 const inbox = () => click(panel("메일"), "open inbox");
@@ -72,7 +78,6 @@ const finishCard = async () => {
   await page.waitForSelector(".ok", { timeout: 8000 });
   await pause(1500);
 };
-const waitFor = (sel) => page.waitForSelector(sel, { state: "visible", timeout: 12000 });
 
 await record("faretrap", async () => {
   await click(".g-explore", "search flights");
@@ -106,12 +111,13 @@ await record("faretrap", async () => {
   await click(".m-cta", "press original price link");
   await waitFor(".big");
   await shot("gone");
-  await waitFor(".g-notice");
+  await waitFor(".sl-notice");
+  await pause(300);
+  await shot("own-list-skeleton");
+  await waitFor(".sl-row button");
   await pause();
-  await shot("back-to-list");
-  await waitFor('button[aria-label^="푸른하늘항공"]');
-  await select("푸른하늘항공");
-  await chooseSeller("faretrap");
+  await shot("own-list-higher-prices");
+  await chooseOffer("푸른하늘항공");
   await fill();
   await click(".o-pay", "press pay");
   await click('text="필요 없음"', "decline upsell");
@@ -159,14 +165,11 @@ await record("voyagate", async () => {
   await openUnread();
   await shot("lure-mail");
   await click(".m-cta", "press original price link");
-  await waitFor(".g-notice");
+  await waitFor(".sl-notice");
+  await waitFor(".sl-row button");
   await pause();
-  await shot("back-to-list");
-  await waitFor('button[aria-label^="동방에어"]');
-  await select("동방에어");
-  await waitFor('button[aria-label^="동방에어"]');
-  await select("동방에어");
-  await chooseSeller("voyagate");
+  await shot("own-list-higher-prices");
+  await chooseOffer("동방에어");
   await click(".v-bar .o-pay", "continue");
   await fill();
   await click(".v-bar .o-pay", "continue");
@@ -213,12 +216,21 @@ await record("pinefly", async () => {
   await waitFor('[aria-label="판매 종료"]');
   await pause();
   await shot("sold-out-after-input");
-  await click("text=항공편 목록으로", "back to list");
-  await waitFor(".g-notice");
-  await shot("back-to-list");
-  await waitFor('button[aria-label^="트리니티에어"]');
-  await select("트리니티에어");
-  await chooseSeller("pinefly");
+  await click("text=항공편 목록으로", "back to own list");
+  await waitFor(".sl-notice");
+  await waitFor(".sl-row button");
+  await pause();
+  await shot("own-list-higher-prices");
+  await page.click('.o-search [aria-label^="승객"]', { label: "open passengers" });
+  await click('.o-search [aria-label="성인 늘리기"]', "add an adult");
+  await click(".o-search .g-pax-done", "close passengers");
+  await click(".sl-search", "search on seller site");
+  await pause(200);
+  await shot("own-list-research-skeleton");
+  await waitFor(".sl-row button");
+  await pause();
+  await shot("own-list-researched");
+  await chooseOffer("트리니티에어");
   await waitFor(".p-lock");
   await fill();
   await click(".o-pay", "continue");
