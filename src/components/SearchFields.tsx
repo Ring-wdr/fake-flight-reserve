@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AIRPORTS, CABINS, travellers, type Cabin, type Search } from "./data";
+import { AIRPORTS, CABINS, travellers, type Cabin, type Search } from "../domain/flights";
 
 // 메타 검색과 판매사 자체 목록이 함께 쓰는 검색 입력.
 function Counter({ label, sub, value, min, max, onChange }: { label: string; sub: string; value: number; min: number; max: number; onChange: (n: number) => void }) {

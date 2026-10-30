@@ -1,0 +1,59 @@
+/* 항공편 검색 */
+.g-page { min-height: calc(100vh - 26px); background: var(--g-bg); color: var(--g-text); }
+.g-head { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-bottom: 1px solid #3c4043; }
+.g-logo { font-size: 22px; font-weight: 500; margin: 0 16px 0 4px; }
+.g-nav { display: flex; gap: 8px; }
+.g-nav a { display: flex; align-items: center; gap: 6px; border: 1px solid #3c4043; border-radius: 20px; padding: 8px 14px; font-size: 14px; }
+.g-nav a.on { background: var(--g-tab); color: var(--g-accent); border-color: transparent; }
+.g-login { background: #c2e7ff; border: 0; border-radius: 20px; padding: 10px 24px; color: #001d35; font-weight: 500; }
+.g-hero { text-align: center; padding-top: 24px; }
+.g-hero h1 { font-size: 48px; font-weight: 400; margin: 8px 0 16px; }
+.g-sky { height: 150px; max-width: 820px; margin: 0 auto; border-radius: 0 0 40px 40px; background: linear-gradient(180deg, #2b3a55, #202124); display: flex; align-items: center; justify-content: center; }
+.g-sky .ms { font-size: 72px; color: var(--g-accent); }
+.g-main { max-width: 900px; margin: 0 auto; padding: 16px 16px 340px; }
+.g-search { background: #303134; border-radius: 8px; padding: 12px 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,.5); }
+.g-opts { display: flex; gap: 20px; font-size: 14px; margin-bottom: 12px; color: var(--g-text); flex-wrap: wrap; }
+.g-opts > span { display: flex; align-items: center; gap: 6px; }
+.g-fields { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.g-field { flex: 1 1 180px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--g-line); border-radius: 4px; height: 56px; padding: 0 12px; }
+.g-field select, .g-field input { flex: 1; min-width: 0; background: transparent; border: 0; color: var(--g-text); outline: none; font-size: 16px; color-scheme: dark; }
+.g-field select option { background: #303134; }
+.g-swap { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--g-line); background: #303134; color: var(--g-text); margin: 0 -18px; z-index: 1; display: flex; align-items: center; justify-content: center; }
+.g-center { text-align: center; margin-top: -18px; }
+.g-explore { background: var(--g-accent); color: #202124; border: 0; border-radius: 24px; padding: 10px 24px; font-weight: 500; display: inline-flex; gap: 6px; align-items: center; }
+.g-chips { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+.g-chip { background: none; border: 1px solid var(--g-line); color: var(--g-text); border-radius: 8px; padding: 6px 12px; font-size: 14px; }
+.g-chip.on { background: var(--g-tab); color: var(--g-accent); border-color: var(--g-accent); }
+.g-notice { display: flex; align-items: center; gap: 8px; background: #41201f; color: #f6c6c3; border-radius: 8px; padding: 6px 12px; margin: 12px 0; font-size: 14px; }
+.g-notice .icon-btn { margin-left: auto; }
+.g-tabs { display: flex; margin-top: 12px; }
+.g-tabs button { flex: 1; background: none; border: 1px solid #3c4043; color: var(--g-text); padding: 14px; font-size: 15px; }
+.g-tabs button:first-child { border-radius: 8px 0 0 8px; }
+.g-tabs button:last-child { border-radius: 0 8px 8px 0; }
+.g-tabs button.on { background: var(--g-tab); border-color: var(--g-accent); border-bottom-width: 3px; }
+.g-h2 { font-size: 20px; font-weight: 500; margin: 20px 0 4px; }
+.g-sub { font-size: 12px; color: var(--g-muted); margin: 0 0 10px; line-height: 1.5; }
+.g-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--g-line); border-radius: 8px; overflow: hidden; }
+.g-row + .g-row { border-top: 1px solid var(--g-line); }
+.g-row-main { width: 100%; background: none; border: 0; color: inherit; display: grid; grid-template-columns: 56px 2fr 1fr 1fr 1fr 110px 24px; gap: 12px; align-items: center; padding: 14px 16px; text-align: left; }
+.g-row-main.static { grid-template-columns: 56px 2fr 1fr 1fr; }
+.g-row-main:not(.static):hover { background: #2a2b2e; }
+.g-row-main b { display: block; font-weight: 500; font-size: 15px; }
+.g-row-main small { display: block; color: var(--g-muted); font-size: 12px; margin-top: 2px; }
+.g-tail .ms { font-size: 30px; }
+.g-price { font-size: 16px; font-weight: 500; text-align: right; color: var(--g-green); }
+.g-price .g-seats { color: #f28b82; }
+.g-detail { padding: 8px 16px 16px 84px; font-size: 14px; }
+.g-detail p { margin: 6px 0; }
+.g-mid, .g-bag { color: var(--g-muted); }
+.g-primary { background: var(--g-accent); color: #202124; border: 0; border-radius: 18px; padding: 8px 22px; font-weight: 500; font-size: 14px; }
+.g-secondary { background: none; color: var(--g-accent); border: 1px solid var(--g-line); border-radius: 18px; padding: 8px 22px; font-size: 14px; }
+.g-price-big { font-size: 26px; text-align: right; }
+.g-price-big small { display: block; font-size: 12px; color: var(--g-muted); }
+.g-sellers li { display: flex; align-items: center; gap: 12px; padding: 14px 16px; flex-wrap: wrap; }
+.g-sellers li + li { border-top: 1px solid var(--g-line); }
+.g-sellers b { font-weight: 500; flex: 1 1 200px; }
+
+@media (min-width: 1101px) and (max-width: 1560px) {
+  .g-sellers li { padding-right: 86px; }
+}

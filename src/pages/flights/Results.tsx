@@ -1,52 +1,13 @@
-import { useEffect, useRef, useState } from "react";
-import { BRAND, SITES, type SiteId } from "./brand";
-import { AIRPORTS, CABINS, cheapestReturn, dateLabel, FLIGHTS, legPrice, OTHER_SELLERS, paxLabel, seats, travellers, won, type Flight, type Search } from "./data";
-import { SearchFields } from "./SearchFields";
-import { Flag } from "./Flag";
-import { Sk, TopBar, useLoad } from "./Skeleton";
-import { go, sellerFare, set, startOrder, useStore } from "./store";
-
-function Header() {
-  return (
-    <header className="g-head">
-      <button className="icon-btn" aria-label="메뉴"><span className="ms">menu</span></button>
-      <a className="g-logo" href="#/">{BRAND.search}</a>
-      <nav className="g-nav">
-        <a><span className="ms">travel_explore</span>살펴보기</a>
-        <a className="on" href="#/"><span className="ms">flight</span>항공편</a>
-        <a><span className="ms">bed</span>호텔</a>
-      </nav>
-      <span className="g-grow" />
-      <button className="icon-btn" aria-label="앱"><span className="ms">apps</span></button>
-      <button className="g-login">로그인</button>
-    </header>
-  );
-}
-
-export function Home() {
-  const { search } = useStore();
-  return (
-    <div className="g-page">
-      <Header />
-      <section className="g-hero">
-        <div className="g-sky" aria-hidden><span className="ms">flight_takeoff</span></div>
-        <h1>항공편</h1>
-      </section>
-      <main className="g-main">
-        <SearchFields search={search} onChange={(s) => set({ search: s })} />
-        <div className="g-center">
-          <button className="g-explore" onClick={() => go("/results")}>
-            <span className="ms">search</span>검색
-          </button>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-function Tail({ f }: { f: Flight }) {
-  return <span className="g-tail" style={{ color: f.color }} aria-hidden><span className="ms">flight</span></span>;
-}
+import { useState } from "react";
+import { go } from "../../app/navigation";
+import { paths } from "../../app/paths";
+import { Flag } from "../../components/Flag";
+import { SearchFields } from "../../components/SearchFields";
+import { Sk, TopBar, useLoad } from "../../components/Skeleton";
+import { AIRPORTS, CABINS, cheapestReturn, dateLabel, FLIGHTS, legPrice, paxLabel, travellers, won, type Flight, type Search } from "../../domain/flights";
+import { set, useStore } from "../../state/store";
+import { Header } from "./Header";
+import { Tail } from "./Tail";
 
 function Row({ f, price, from, to, date, cabin, open, onToggle, onSelect, caption }: { f: Flight; price: number; from: string; to: string; date: string; cabin: string; open: boolean; onToggle: () => void; onSelect: () => void; caption: string }) {
   return (
@@ -152,76 +113,13 @@ export function Results() {
                       open={open === f.id} onToggle={() => setOpen(open === f.id ? null : f.id)}
                       onSelect={() => {
                         if (round && !out) { setOutbound(f.id); setOpen(null); window.scrollTo(0, 0); }
-                        else go(`/booking/${out ? out.id : f.id}${out ? `/${f.id}` : ""}`);
+                        else go(out ? paths.booking(out.id, f.id) : paths.booking(f.id));
                       }} />
                   ))}
             </ul>
             {!loading && list.length === 0 && <p className="g-sub">조건에 맞는 항공편이 없습니다.</p>}
           </>
         )}
-      </main>
-    </div>
-  );
-}
-
-const SITE_ORDER: SiteId[] = ["faretrap", "voyagate", "pinefly", "truefare"];
-const SELLER_COUNT = SITE_ORDER.length + OTHER_SELLERS.length;
-
-export function Booking({ id, ret }: { id: string; ret?: string }) {
-  const { search } = useStore();
-  const f = FLIGHTS.find((x) => x.id === id) ?? FLIGHTS[0];
-  const r = FLIGHTS.find((x) => x.id === ret);
-  const loading = useLoad(1000);
-  // 판매처 가격이 한 곳씩 도착하는 모습을 재현한다.
-  const [arrived, setArrived] = useState(0);
-  const timer = useRef<number>();
-  useEffect(() => {
-    if (loading) return;
-    timer.current = window.setInterval(() => setArrived((n) => n + 1), 450);
-    return () => clearInterval(timer.current);
-  }, [loading]);
-  const [hint, setHint] = useState("");
-  const base = sellerFare("faretrap", search, f.id, r?.id);
-  return (
-    <div className="g-page">
-      {(loading || arrived < SELLER_COUNT) && <TopBar />}
-      <Header />
-      <main className="g-main">
-        <h2 className="g-h2">{AIRPORTS[search.from]} {r ? "⇄" : "→"} {AIRPORTS[search.to]}</h2>
-        <p className="g-sub">{r ? "왕복" : "편도"} · {CABINS[search.cabin].label} · {paxLabel(search)}</p>
-        <div className="g-price-big">{loading ? <Sk w={140} h={28} style={{ marginLeft: "auto" }} /> : won(base)}<small>최저 총 가격</small></div>
-        <ul className="g-list"><li className="g-row"><div className="g-row-main static">
-          <Tail f={f} />
-          <span className="g-time"><b>{f.dep} – {f.arr}</b><small>{dateLabel(search.date)} · {f.airline}</small></span>
-          <span className="g-dur"><b>{f.duration}</b><small>{search.from}–{search.to}</small></span>
-          <span className="g-stop"><b>{f.stops ? `경유 ${f.stops}회` : "직항"}</b></span>
-        </div></li>
-        {r && <li className="g-row"><div className="g-row-main static">
-          <Tail f={r} />
-          <span className="g-time"><b>{r.dep} – {r.arr}</b><small>{dateLabel(search.returnDate)} · {r.airline}</small></span>
-          <span className="g-dur"><b>{r.duration}</b><small>{search.to}–{search.from}</small></span>
-          <span className="g-stop"><b>{r.stops ? `경유 ${r.stops}회` : "직항"}</b></span>
-        </div></li>}</ul>
-        <h2 className="g-h2">예약 옵션</h2>
-        <ul className="g-list g-sellers" aria-busy={arrived < SELLER_COUNT}>
-          {SITE_ORDER.map((site, i) => (
-            <li key={site}>
-              <b>{SITES[site].name}에서 예약</b>
-              {arrived > i ? <span className="g-seller-price">{won(sellerFare(site, search, f.id, r?.id))}</span> : <Sk w={90} h={16} />}
-              <button className="g-primary" disabled={arrived <= i} data-site={site} onClick={() => startOrder(site, f.id, r?.id)}>계속</button>
-            </li>
-          ))}
-          {OTHER_SELLERS.map((s, i) => (
-            <li key={s.name}>
-              <b>{s.name}에서 예약</b>
-              {arrived > i + SITE_ORDER.length ? <span className="g-seller-price">{won(base + s.delta * seats(search))}</span> : <Sk w={90} h={16} />}
-              <button className="g-secondary" onClick={() => setHint(`이 데모는 ${SITE_ORDER.map((x) => SITES[x].name).join(", ")} 흐름만 제공합니다.`)}>계속</button>
-            </li>
-          ))}
-        </ul>
-        <Flag title="판매처별 조합">{SITE_ORDER.map((x) => `${SITES[x].name}: ${SITES[x].mix}`).join(" / ")}</Flag>
-        <p className="g-sub" role="status">{hint}</p>
-        <p className="g-sub">티켓은 항공사 또는 여행사가 판매합니다. {BRAND.search}은(는) 통신판매의 중개자이며, 통신판매의 당사자가 아닙니다.</p>
       </main>
     </div>
   );

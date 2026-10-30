@@ -93,10 +93,10 @@ out.afterSoldOut = await page.url();
 const stats = {};
 for (const site of ["faretrap", "voyagate", "pinefly"]) {
   await page.evaluate((s) => {
-    const raw = JSON.parse(localStorage.getItem("ffr-state-v3"));
-    raw.site = s; raw.listing = null; raw.notice = null;
-    localStorage.setItem("ffr-state-v3", JSON.stringify(raw));
-    location.hash = "/ota/list";
+    const raw = JSON.parse(localStorage.getItem("ffr-state-v4"));
+    raw.listing = null; raw.notice = null;
+    localStorage.setItem("ffr-state-v4", JSON.stringify(raw));
+    location.hash = `/sites/${s}/list`;
     location.reload();
   }, site);
   const r = { included: 0, excluded: 0, belowAnchor: 0, wrongAnchorCount: 0, anchors: new Set() };
@@ -131,10 +131,10 @@ out.researchBusiness = { economy: a1, business: await anchorNow() };
 
 // 정상 판매처: 강제 시나리오에서도 가격이 일정하고 수법이 발동하지 않는다.
 await page.evaluate(() => {
-  const raw = JSON.parse(localStorage.getItem("ffr-state-v3"));
-  raw.site = "truefare"; raw.listing = null; raw.notice = null; raw.search = { ...raw.search, cabin: "economy" };
-  localStorage.setItem("ffr-state-v3", JSON.stringify(raw));
-  location.hash = "/ota/list";
+  const raw = JSON.parse(localStorage.getItem("ffr-state-v4"));
+  raw.listing = null; raw.notice = null; raw.search = { ...raw.search, cabin: "economy" };
+  localStorage.setItem("ffr-state-v4", JSON.stringify(raw));
+  location.hash = "/sites/truefare/list";
   location.reload();
 });
 await wait(100);
@@ -158,7 +158,7 @@ tf.sameTotal = shown === (await page.evaluate(() => document.querySelector("[dat
 tf.timer = await page.evaluate(() => !!document.querySelector(".o-timer"));
 await page.click("text=결제하지 않고 나가기");
 await wait();
-tf.lureScheduled = await page.evaluate(() => JSON.parse(localStorage.getItem("ffr-state-v3")).scheduled.length);
+tf.lureScheduled = await page.evaluate(() => JSON.parse(localStorage.getItem("ffr-state-v4")).scheduled.length);
 out.truefare = tf;
 
 // 네 판매처 가격 순서
@@ -182,16 +182,30 @@ await page.reload();
 await page.waitForSelector(".o-timer", { timeout: 8000 });
 out.timerAfterReload = await timer();
 
+// 라우터: 없는 판매처와 flow에 없는 단계는 안전한 곳으로 돌려보낸다.
+const landed = async (hash) => {
+  await page.evaluate((h) => { location.hash = h; }, hash);
+  await wait(500);
+  return page.evaluate(() => location.hash);
+};
+out.routes = {
+  unknownSite: await landed("/sites/nope/list"),
+  unknownPath: await landed("/nope"),
+  stepNotInFlow: await landed("/sites/faretrap/book/seat"),
+  siteIndex: await landed("/sites/voyagate"),
+  twoSegmentBooking: await landed("/booking/f1/f2"),
+};
+
 // 모바일 가로 넘침
 await page.cdp("Emulation.setDeviceMetricsOverride", { width: 390, height: 800, deviceScaleFactor: 2, mobile: true });
 await page.click(".panel-head .icon-btn");
 const overflow = {};
 for (const site of ["faretrap", "voyagate", "pinefly", "truefare"]) {
   await page.evaluate((s) => {
-    const raw = JSON.parse(localStorage.getItem("ffr-state-v3"));
-    raw.site = s; raw.order = { ...raw.order, site: s };
-    localStorage.setItem("ffr-state-v3", JSON.stringify(raw));
-    location.hash = "/ota/passenger";
+    const raw = JSON.parse(localStorage.getItem("ffr-state-v4"));
+    raw.order = { ...raw.order, site: s };
+    localStorage.setItem("ffr-state-v4", JSON.stringify(raw));
+    location.hash = `/sites/${s}/book/passenger`;
     location.reload();
   }, site);
   await page.waitForSelector(".o-sample", { timeout: 8000 });
@@ -199,7 +213,7 @@ for (const site of ["faretrap", "voyagate", "pinefly", "truefare"]) {
   overflow[site] = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   await page.screenshot({ path: `${ROOT}/mobile-${site}.png` });
 }
-for (const r of ["/", "/results", "/booking/f1", "/ota/list", "/mail"]) {
+for (const r of ["/", "/results", "/booking/f1", "/sites/pinefly/list", "/mail"]) {
   await page.evaluate((h) => { location.hash = h; }, r);
   await wait(1800);
   overflow[r] = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
@@ -208,7 +222,7 @@ out.overflow = overflow;
 
 // 모바일 승객 시트: 모든 버튼이 화면 안에 있고 실제로 눌린다.
 const sheet = {};
-for (const [name, hash, scope] of [["meta", "/", ""], ["seller", "/ota/list", ".o-search "]]) {
+for (const [name, hash, scope] of [["meta", "/", ""], ["seller", "/sites/pinefly/list", ".o-search "]]) {
   await page.evaluate((h) => { location.hash = h; }, hash);
   await wait(1800);
   await page.evaluate((sc) => window.scrollTo(0, document.querySelector(`${sc}.g-pax`).getBoundingClientRect().top + scrollY - 200), scope);

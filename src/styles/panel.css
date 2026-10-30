@@ -1,0 +1,24 @@
+/* 패널 */
+.panel { position: fixed; right: 12px; bottom: 12px; width: 240px; background: #fff; color: #1f2933; border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.35); padding: 10px 14px 12px; font-size: 13px; z-index: 40; font-family: "Noto Sans KR", sans-serif; }
+.panel-head { display: flex; align-items: center; gap: 8px; }
+.panel-head .icon-btn { width: 28px; height: 28px; margin-left: auto; }
+.panel-clock { color: var(--o-muted); font-size: 12px; }
+.panel-label { display: block; font-size: 12px; color: #52606d; margin: 8px 0 4px; }
+.panel-label em { color: var(--o-red); font-style: normal; }
+.panel select { width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #c4cdd5; background: #fff; }
+.panel-hint { margin: 4px 0 0; font-size: 11px; color: var(--o-muted); line-height: 1.4; }
+.panel-check { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
+.panel-row { display: flex; gap: 4px; margin-top: 4px; }
+.panel-row button, .panel-reset { flex: 1; background: #f1f3f5; border: 1px solid #d5dbe1; border-radius: 6px; padding: 6px 2px; font-size: 12px; position: relative; }
+.panel-reset { width: 100%; margin-top: 6px; }
+.panel-fab { position: fixed; right: 12px; bottom: 12px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.35); z-index: 40; }
+.dot { position: absolute; top: 3px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: #e03131; }
+.phone { position: fixed; left: 12px; bottom: 12px; width: 260px; max-height: 60vh; overflow: auto; background: #111; color: #fff; border: 6px solid #333; border-radius: 26px; padding: 8px 14px 16px; z-index: 40; font-family: "Noto Sans KR", sans-serif; font-size: 13px; }
+.phone-bar { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+.phone-bar .icon-btn { width: 26px; height: 26px; }
+.phone h3 { font-size: 14px; margin: 4px 0 10px; }
+.phone-empty { color: #868e96; }
+.bubble { background: #2c2c2e; border-radius: 12px; padding: 9px 11px; margin-bottom: 8px; line-height: 1.5; }
+.bubble time { display: block; font-size: 10px; color: #adb5bd; margin-top: 3px; }
+.toast { position: fixed; top: 34px; right: 12px; width: 300px; max-width: calc(100vw - 24px); text-align: left; background: #fff; color: #1f2933; border: 0; border-radius: 12px; padding: 12px 14px; box-shadow: 0 6px 24px rgba(0,0,0,.4); z-index: 50; display: grid; gap: 3px; font-size: 13px; font-family: "Noto Sans KR", sans-serif; animation: drop .25s ease-out; }
+@keyframes drop { from { transform: translateY(-12px); opacity: 0; } }

@@ -1,0 +1,7 @@
+.site-pinefly { --o-brand: #2f7d68; --o-brand-2: #3f9b82; --o-red: #c2410c; background: #fff; }
+.site-pinefly .o-head { background: #fff; color: #1f2933; border-bottom: 1px solid #e5e8eb; }
+.site-pinefly .o-logo { color: var(--o-brand); display: flex; align-items: center; gap: 4px; font-weight: 500; }
+.site-pinefly .o-pay { background: var(--o-brand); border-radius: 8px; }
+.site-pinefly .o-ghost { border-radius: 8px; }
+.site-pinefly .o-card, .site-pinefly .o-side { border: 1px solid #e5e8eb; border-radius: 10px; }
+.site-pinefly .o-search, .site-pinefly .sl-filter, .site-pinefly .sl-row { border: 1px solid #e5e8eb; border-radius: 10px; }

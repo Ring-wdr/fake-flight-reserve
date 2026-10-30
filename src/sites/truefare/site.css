@@ -1,0 +1,7 @@
+.site-truefare { --o-brand: #1d4e89; --o-brand-2: #2a6cb5; --o-red: #1d4e89; background: #f5f7fa; }
+.site-truefare .o-head { background: #1d4e89; }
+.site-truefare .o-pay { background: #1d4e89; border-radius: 8px; }
+.site-truefare .o-ghost { border-radius: 8px; border-color: #1d4e89; color: #1d4e89; }
+.site-truefare .o-sample { background: #e8f0fa; color: #1d4e89; border-color: #2a6cb5; }
+.site-truefare .o-card, .site-truefare .o-side, .site-truefare .o-search, .site-truefare .sl-row, .site-truefare .sl-filter { border-radius: 8px; }
+.site-truefare .o-spin { border-color: #d7e4f4; border-top-color: #1d4e89; }

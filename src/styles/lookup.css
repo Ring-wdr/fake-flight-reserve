@@ -1,0 +1,25 @@
+/* 항공사 조회 */
+.l-page { min-height: calc(100vh - 26px); background: #fff; color: #1f2933; font-family: "Noto Sans KR", sans-serif; }
+.l-head { background: #16324f; color: #fff; padding: 16px 24px; font-size: 18px; display: flex; gap: 8px; align-items: center; }
+.l-main { max-width: 480px; margin: 40px auto; padding: 0 16px 200px; display: grid; gap: 14px; }
+.l-main label { display: grid; gap: 6px; font-size: 13px; }
+.l-main input { border: 1px solid #c4cdd5; border-radius: 4px; padding: 12px; font-size: 15px; }
+.l-main button { background: #16324f; color: #fff; border: 0; border-radius: 4px; padding: 12px; }
+.l-none { color: #c92a2a; font-weight: 500; }
+
+/* 예약 조회 결과 */
+.l-result { border: 1px solid #c4cdd5; border-radius: 8px; padding: 16px; display: grid; gap: 12px; font-size: 14px; line-height: 1.5; }
+.l-result p { margin: 0; }
+.l-badge { justify-self: start; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 13px; background: #e7f0fb; color: #16508a; }
+.l-result.delayed .l-badge { background: #fff4e6; color: #a84300; }
+.l-result.cancelled .l-badge { background: #fdecec; color: #b42318; }
+.l-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.l-steps li { display: flex; align-items: center; gap: 8px; color: #7b8794; }
+.l-steps li::before { content: ""; width: 12px; height: 12px; flex: none; border-radius: 50%; border: 2px solid #c4cdd5; }
+.l-steps li.done { color: #1f2933; }
+.l-steps li.done::before { background: #16324f; border-color: #16324f; }
+.l-result dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; border-top: 1px solid #e5e8eb; padding-top: 12px; }
+.l-result dt { color: #7b8794; }
+.l-result dd { margin: 0; }
+
+.l-result.ticketed .l-badge { background: #d3f9d8; color: #1b6b2f; }

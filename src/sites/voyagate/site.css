@@ -1,0 +1,18 @@
+.site-voyagate { --o-brand: #0d0d0d; --o-brand-2: #6ccff6; background: #eef0f2; }
+.site-voyagate .o-head { background: #000; }
+.site-voyagate .o-logo { letter-spacing: 2px; font-weight: 500; color: #6ccff6; }
+.site-voyagate .o-pay { background: #6ccff6; color: #0d0d0d; border-radius: 6px; }
+.site-voyagate .o-ghost { border-color: #0d0d0d; color: #0d0d0d; border-radius: 6px; }
+.site-voyagate .o-sample { background: #eaf8fe; color: #0d0d0d; border-color: #6ccff6; }
+.site-voyagate .o-link { color: #1864ab; }
+.site-voyagate .o-card { border-radius: 8px; }
+.site-voyagate .o-spin { border-color: #dceff8; border-top-color: #0d0d0d; }
+.site-voyagate .sl-layout { grid-template-columns: minmax(0, 1fr); }
+.site-voyagate .sl-filter { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; border-radius: 8px; }
+.site-voyagate .o-search { border-radius: 8px; background: #111; --g-text: #fff; --g-line: #555; --g-muted: #aaa; --g-accent: #6ccff6; --g-tab: #333; color: #fff; }
+.site-voyagate .o-search .g-field select, .site-voyagate .o-search .g-field input, .site-voyagate .o-search .g-opt select { color-scheme: dark; }
+.site-voyagate .o-search select option, .site-voyagate .o-search .g-opt select option { background: #222; }
+.site-voyagate .o-search .g-swap, .site-voyagate .o-search .g-pax-pop { background: #222; }
+.site-voyagate .o-search .g-count button { background: #333; }
+.site-voyagate .sl-row { border-radius: 8px; }
+.site-voyagate .sl-price b { color: #0d0d0d; font-weight: 500; }

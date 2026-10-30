@@ -30,11 +30,11 @@ Truefare의 표시 가격은 네 곳 중 가장 높습니다. 다른 세 곳에 
 
 ## 판매사 자체 목록
 
-가격 변동이나 판매 종료, 결제 중단, 이탈 유도 메일 뒤에는 메타 검색이 아니라 해당 판매사의 자체 목록(`/ota/list`)으로 이동합니다. 이 목록에서도 검색할 수 있으며, 판매처마다 달라지는 것은 문구와 가격 표기뿐입니다.
+가격 변동이나 판매 종료, 결제 중단, 이탈 유도 메일 뒤에는 메타 검색이 아니라 해당 판매사의 자체 목록(`/sites/:siteId/list`)으로 이동합니다. 이 목록에서도 검색할 수 있으며, 판매처마다 달라지는 것은 문구와 가격 표기뿐입니다.
 
-- `src/offers.ts`: 목록 생성 로직. 판매처를 추가해도 그대로 쓰며, `honest` 판매처는 실제 가격을 그대로 보여 줍니다.
-- `src/SearchFields.tsx`: 메타 검색과 판매사 목록이 함께 쓰는 검색 입력.
-- `src/SellerList.tsx`: 공통 목록 상태와 화면.
+- `src/domain/offers.ts`: 목록 생성 로직. 판매처를 추가해도 그대로 쓰며, `honest` 판매처는 실제 가격을 그대로 보여 줍니다.
+- `src/components/SearchFields.tsx`: 메타 검색과 판매사 목록이 함께 쓰는 검색 입력.
+- `src/pages/seller/SellerList.tsx`: 공통 목록 상태와 화면.
 
 목록 규칙은 다음과 같습니다.
 
@@ -59,7 +59,7 @@ Truefare의 표시 가격은 네 곳 중 가장 높습니다. 다른 세 곳에 
 
 ## 가격 계산
 
-검색 입력은 모두 가격에 반영됩니다. 가격은 재현용 계수로 계산한 값이며 실제 운임이 아닙니다(`src/data.ts`).
+검색 입력은 모두 가격에 반영됩니다. 가격은 재현용 계수로 계산한 값이며 실제 운임이 아닙니다(`src/domain/flights.ts`).
 
 | 입력 | 반영 방식 |
 | --- | --- |
@@ -69,9 +69,45 @@ Truefare의 표시 가격은 네 곳 중 가장 높습니다. 다른 세 곳에 
 | 노선 | 공항 간 거리 계수 |
 | 날짜 | 12월 20일 이후 25%, 금·토요일 출발 8% 할증 |
 
+## 폴더 구조
+
+```
+src/
+  main.tsx
+  app/         라우터(router.tsx), 공통 레이아웃, 경로 생성(paths.ts), 이동 함수(navigation.ts)
+  components/  여러 화면이 쓰는 UI (재현 패널, 검색 입력, 스켈레톤, 해설 등)
+  domain/      항공편과 가격 계산, 판매사 목록 생성
+  state/       앱 상태와 수법 진행 로직
+  sites/       판매처별 설정과 스타일
+  pages/       flights(메타 검색), seller(판매사 공통 화면), mail, lookup
+  styles/      공통 스타일
+```
+
+라우팅은 `react-router-dom`의 `createHashRouter`를 라이브러리 방식으로 씁니다. GitHub Pages에서도 새로고침과 직접 링크가 동작하도록 해시 URL을 유지합니다.
+
+## 판매처 추가하기
+
+라우터와 페이지는 수정하지 않습니다.
+
+1. `src/sites/<id>/index.ts`에 `SiteConfig`를 작성합니다. 필요하면 같은 폴더에 `site.css`를 두고 `.site-<id>` 아래에 스타일을 적습니다.
+2. `src/sites/index.ts`의 `SITE_LIST`에 등록합니다.
+
+등록하면 `/sites/<id>/*` 경로, 예약 옵션 목록, 자사 목록, 결제, 메일이 자동으로 연결됩니다. 주요 설정은 다음과 같습니다.
+
+| 설정 | 역할 |
+| --- | --- |
+| `flow` | 결제 전 예약 단계와 순서. `summary`, `passenger`, `fare`, `bags`, `seat` 중에서 고르며 `passenger`를 포함해야 합니다. 마지막 단계에서 가격을 재확인합니다. |
+| `header` | 진행 표시 방식. `steps`(2단계), `wizard`(단계 n/m), `stepper`(단계 목록) |
+| `enter` | 판매사로 넘어올 때의 전환 화면. `skeleton`, `spinner`, `ticket` |
+| `mix` | 수법 조합. 가격 변동(`price`), 이탈 유도 메일(`lure`), 결제 후 처리(`after`) |
+| `extras` | 유료 옵션과 기본 선택 여부. `fare` 단계에는 `flexi`, `seat` 단계에는 `seat`, `bags` 단계에는 `bag` 옵션이 필요합니다. |
+| `honest` | 정상 판매처 여부. 패널 시나리오의 영향을 받지 않고 목록에 실제 가격을 보여 줍니다. |
+
+새로운 종류의 단계가 필요할 때만 `FlowStep` 타입과 `src/pages/seller/StepRoute.tsx`의 `STEP_PAGES`에 화면을 추가합니다.
+
 ## 이름 바꾸기
 
-표시되는 서비스 이름은 `src/brand.ts`에서 관리합니다.
+메타 검색, 메일, 결제 앱 이름은 `src/sites/brand.ts`에서, 판매처 이름은 각 판매처 폴더에서 관리합니다.
 
 ## 재현 영상 만들기
 

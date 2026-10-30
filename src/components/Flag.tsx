@@ -1,4 +1,4 @@
-import { useStore } from "./store";
+import { useStore } from "../state/store";
 
 // '수법 해설 표시'를 켰을 때만 보이는 주석.
 export function Flag({ title, children, ok }: { title: string; children: string; ok?: boolean }) {

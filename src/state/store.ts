@@ -1,7 +1,10 @@
 import { useSyncExternalStore } from "react";
-import { BRAND, SITES, type SiteId } from "./brand";
-import { DEFAULT_SEARCH, FLIGHTS, seats, won, type Flight, type Search } from "./data";
-import { createListing, sellerFare, type Listing } from "./offers";
+import { go } from "../app/navigation";
+import { paths } from "../app/paths";
+import { createListing, sellerFare, type Listing } from "../domain/offers";
+import { DEFAULT_SEARCH, FLIGHTS, seats, won, type Flight, type Search } from "../domain/flights";
+import { BRAND } from "../sites/brand";
+import { SITES, type Extra, type Mix, type SiteId } from "../sites";
 
 export { sellerFare };
 
@@ -15,15 +18,6 @@ export const SCENARIOS: { id: Scenario; label: string; hint: string }[] = [
   { id: "confirm", label: "가짜 확정 메일만", hint: "확정 메일 뒤에도 조회하면 계속 발권 중이고, 72시간 뒤 지연" },
 ];
 
-type Mix = { price: "none" | "firstPay" | "firstList" | "alternate"; lure: boolean; after: "cancel" | "delay" | "ticket" };
-
-const SITE_MIX: Record<SiteId, Mix> = {
-  faretrap: { price: "firstPay", lure: true, after: "cancel" },
-  voyagate: { price: "none", lure: true, after: "delay" },
-  pinefly: { price: "firstList", lure: false, after: "cancel" },
-  truefare: { price: "none", lure: false, after: "ticket" },
-};
-
 const FORCED: Record<Exclude<Scenario, "site">, Mix> = {
   price: { price: "alternate", lure: false, after: "cancel" },
   lure: { price: "none", lure: true, after: "cancel" },
@@ -31,7 +25,7 @@ const FORCED: Record<Exclude<Scenario, "site">, Mix> = {
   confirm: { price: "none", lure: false, after: "delay" },
 };
 
-const mixOf = (site: SiteId) => (state.scenario === "site" || SITES[site].honest ? SITE_MIX[site] : FORCED[state.scenario]);
+const mixOf = (site: SiteId) => (state.scenario === "site" || SITES[site].honest ? SITES[site].mix : FORCED[state.scenario]);
 
 export type Mail = { id: string; from: string; addr: string; subject: string; preview: string; kind: MailKind; at: number; read: boolean; site: SiteId; order: Order };
 export type MailKind = "receipt" | "lure" | "cancel" | "delay" | "ticket";
@@ -39,7 +33,7 @@ export type Sms = { id: string; from: string; body: string; at: number };
 // 알림은 예약 시점의 주문을 들고 있어, 그 사이 새 주문을 시작해도 내용이 바뀌지 않는다.
 type Scheduled = { at: number; type: "lure" | "cancel" | "delay"; order: Order };
 
-export type Extra = { id: string; label: string; price: number; on: boolean };
+export type { Extra };
 
 export type Order = {
   site: SiteId;
@@ -60,7 +54,6 @@ export type State = {
   annotate: boolean;
   now: number;
   search: Search;
-  site: SiteId;
   listing: Listing | null;
   order: Order | null;
   focusOrder: Order | null;
@@ -74,13 +67,12 @@ export type State = {
   phoneOpen: boolean;
 };
 
-const KEY = "ffr-state-v3";
+const KEY = "ffr-state-v4";
 const fresh = (scenario: Scenario = "site", annotate = false): State => ({
   scenario,
   annotate,
   now: Date.now(),
   search: DEFAULT_SEARCH,
-  site: "faretrap",
   listing: null,
   order: null,
   focusOrder: null,
@@ -117,9 +109,7 @@ export const getState = () => state;
 export const useStore = () =>
   useSyncExternalStore((f) => (subs.add(f), () => subs.delete(f)), () => state);
 
-export const go = (path: string) => {
-  location.hash = path;
-};
+export { go };
 
 export const flightOf = (o: Order | null): Flight | undefined => FLIGHTS.find((f) => f.id === o?.flightId);
 export const returnOf = (o: Order | null): Flight | undefined => FLIGHTS.find((f) => f.id === o?.retId);
@@ -140,28 +130,6 @@ export function checkoutTotal(o: Order) {
   return fareTotal(o) + feeTotal(o) + extrasTotal(o);
 }
 
-const INITIAL_EXTRAS: Record<SiteId, Extra[]> = {
-  faretrap: [
-    { id: "insurance", label: "여행 보험", price: 20300, on: true },
-    { id: "seat", label: "좌석 우선 배정", price: 12000, on: true },
-    { id: "fast", label: "초고속 발권", price: 4100, on: false },
-  ],
-  voyagate: [
-    { id: "insurance", label: "여행 보호 플랜", price: 27000, on: true },
-    { id: "support", label: "프리미엄 고객 지원", price: 15900, on: true },
-  ],
-  pinefly: [
-    { id: "lock", label: "3일 가격 고정", price: 29300, on: false },
-    { id: "flexi", label: "유연한 티켓", price: 38000, on: true },
-    { id: "bag", label: "위탁 수하물 20kg", price: 52000, on: false },
-    { id: "seat", label: "좌석 지정", price: 15000, on: true },
-  ],
-  truefare: [
-    { id: "insurance", label: "여행 보험", price: 18000, on: false },
-    { id: "bag", label: "위탁 수하물 20kg", price: 45000, on: false },
-  ],
-};
-
 export function setExtra(id: string, on: boolean) {
   const o = state.order;
   if (o) set({ order: { ...o, extras: o.extras.map((e) => (e.id === id ? { ...e, on } : e)) } });
@@ -179,32 +147,30 @@ function addMail(order: Order, kind: MailKind, subject: string, preview: string,
 export function startOrder(site: SiteId, flightId: string, retId?: string, fromList?: { fare: number }) {
   const search = state.search;
   set({
-    site,
-    order: { site, flightId, retId, search, fare: fromList?.fare ?? sellerFare(site, search, flightId, retId), surge: 0, extras: INITIAL_EXTRAS[site].map((e) => ({ ...e })), status: "draft" },
+    order: { site, flightId, retId, search, fare: fromList?.fare ?? sellerFare(site, search, flightId, retId), surge: 0, extras: SITES[site].extras.map((e) => ({ ...e })), status: "draft" },
     notice: null,
   });
-  go(!fromList ? "/ota/enter" : site === "voyagate" ? "/ota/summary" : "/ota/passenger");
+  go(fromList ? paths.step(site, SITES[site].flow[0]) : paths.enter(site));
 }
 
 // 판매사 자체 목록으로 보낸다. 사용자가 보던 가격이 새 목록의 기준가가 된다.
-export function goSellerList(notice: string | null = null, from?: Order | null) {
-  const o = from ?? state.order;
-  const site = o?.site ?? state.site;
+export function goSellerList(siteId: SiteId, notice: string | null = null, from?: Order | null) {
+  const o = from ?? (state.order?.site === siteId ? state.order : null);
+  const site = siteId;
   const search = o?.search ?? state.search;
   set({
-    site,
     search,
     order: null,
     focusOrder: null,
     notice,
     listing: createListing(site, search, o ? { anchor: o.fare, soldId: o.flightId } : {}),
   });
-  go("/ota/list");
+  go(paths.list(site));
 }
 
-export function leaveToList() {
+export function leaveToList(siteId: SiteId) {
   abandonCheckout();
-  goSellerList();
+  goSellerList(siteId);
 }
 
 // 여권 입력 뒤 가격 변동이 발동하는지와 어느 쪽 분기인지 결정한다.
@@ -272,7 +238,7 @@ function fire(s: Scheduled) {
       `${f?.airline ?? ""} 항공권이 아직 고객님을 기다리고 있습니다. 좌석이 곧 마감됩니다.`,
       s.at,
     );
-    set({ mails: [mail, ...mails], toast: { title: `${BRAND.mail} · ${name}`, body: mail.subject, href: `/mail/${mail.id}` } });
+    set({ mails: [mail, ...mails], toast: { title: `${BRAND.mail} · ${name}`, body: mail.subject, href: paths.mail(mail.id) } });
   }
   if (s.type === "cancel") {
     const cancelled: Order = { ...order, status: "cancelled" };
@@ -299,7 +265,7 @@ function fire(s: Scheduled) {
       `항공사 시스템 사정으로 발권이 지연되고 있습니다. 조금만 더 기다려 주세요.`,
       s.at,
     );
-    set({ mails: [mail, ...mails], toast: { title: `${BRAND.mail} · ${name}`, body: mail.subject, href: `/mail/${mail.id}` } });
+    set({ mails: [mail, ...mails], toast: { title: `${BRAND.mail} · ${name}`, body: mail.subject, href: paths.mail(mail.id) } });
   }
 }
 

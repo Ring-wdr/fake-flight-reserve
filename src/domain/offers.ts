@@ -1,6 +1,6 @@
 // 판매사 자체 목록의 공통 로직. 화면이나 판매사별 차이를 모르며, 판매처를 추가해도 그대로 쓴다.
-import { SITES, type SiteId } from "./brand";
-import { FLIGHTS, legPrice, seats, type Flight, type Search } from "./data";
+import { SITES, type SiteId } from "../sites";
+import { FLIGHTS, legPrice, seats, type Flight, type Search } from "./flights";
 
 export type Listing = { site: SiteId; search: Search; anchor: number; seed: number; soldId?: string };
 

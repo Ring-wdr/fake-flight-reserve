@@ -1,0 +1,14 @@
+/* 스켈레톤 */
+.sk { display: block; background: linear-gradient(90deg, var(--sk1, #e4e8ec) 25%, var(--sk2, #f3f5f7) 50%, var(--sk1, #e4e8ec) 75%); background-size: 200% 100%; animation: shimmer 1.3s linear infinite; }
+.g-page { --sk1: #3c4043; --sk2: #4c5054; }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.top-bar { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 60; background: linear-gradient(90deg, transparent, #8ab4f8, transparent); background-size: 40% 100%; background-repeat: no-repeat; animation: slide 1s linear infinite; }
+@keyframes slide { from { background-position: -40% 0; } to { background-position: 140% 0; } }
+.static-sk { cursor: default; }
+.g-mini-spin { display: inline-block; width: 14px; height: 14px; border: 2px solid #5f6368; border-top-color: var(--g-accent); border-radius: 50%; animation: spin 1s linear infinite; vertical-align: -2px; }
+.m-boot { height: calc(100vh - 26px); background: #fff; color: #5f6368; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.m-boot .ms { font-size: 64px; color: #c5221f; }
+.m-boot i { width: 240px; height: 3px; background: #e8eaed; overflow: hidden; }
+.m-boot u { display: block; width: 40%; height: 100%; background: #c5221f; animation: slide-in 1s ease-in-out infinite; }
+@keyframes slide-in { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+@media (prefers-reduced-motion: reduce) { .sk, .top-bar, .m-boot u, .o-spin, .g-mini-spin, .p-progress { animation: none; } }
