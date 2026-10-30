@@ -39,7 +39,8 @@ function Page({ route }: { route: string }) {
 
 function Panel() {
   const s = useStore();
-  const [open, setOpen] = useState(true);
+  // 좁은 화면에서는 패널이 버튼을 가리지 않도록 접어서 시작한다.
+  const [open, setOpen] = useState(() => innerWidth > 1100);
   if (!open)
     return (
       <button className="panel-fab" onClick={() => setOpen(true)} aria-label="재현 패널 열기">
