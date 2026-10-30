@@ -1,0 +1,6 @@
+node_modules
+dist
+research
+.DS_Store
+evidence/frames
+evidence/frames.txt
